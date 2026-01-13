@@ -17,9 +17,9 @@ random_crop: false
 augment_flip_rotate: true
 
 # Training hyperparameters
-batch_size: 128
+batch_size: 2048
 num_epochs: 150  # May need more epochs with augmentation
-learning_rate: 0.01
+learning_rate: 0.04
 momentum: 0.9
 optimizer: sgd
 lr_schedule: null
