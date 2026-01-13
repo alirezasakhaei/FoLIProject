@@ -1,0 +1,40 @@
+# Gaussian Noise Pixels experiment with Inception on CIFAR10
+# Replace true images with completely random Gaussian noise
+# Tests if CNNs can fit pure noise
+
+model_name: small_inception
+dataset: cifar10
+data_root: ./data
+
+# Replace images with Gaussian noise
+randomization: gaussian_pixels
+corruption_prob: 0.0
+randomization_seed: 42
+
+# No explicit regularization
+weight_decay: 0.0
+random_crop: false
+augment_flip_rotate: false
+
+# Training hyperparameters
+batch_size: 128
+num_epochs: 100
+learning_rate: 0.01
+momentum: 0.9
+optimizer: sgd
+lr_schedule: null
+
+# Preprocessing
+center_crop_size: 28
+
+# Logging
+use_wandb: false
+wandb_project: FOLI-Project
+wandb_entity: alirezasakhaeirad
+save_dir: ./checkpoints
+log_interval: 10
+
+# Reproducibility
+seed: 42
+device: cuda
+

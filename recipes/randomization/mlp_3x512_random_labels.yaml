@@ -1,0 +1,39 @@
+# Random Labels experiment with MLP 3x512 on CIFAR10
+# Corresponds to "MLP 3x512" row in Table 1 with random labels
+
+model_name: mlp_3x512
+dataset: cifar10
+data_root: ./data
+
+# Complete label randomization
+randomization: random_labels
+corruption_prob: 0.0
+randomization_seed: 42
+
+# No explicit regularization
+weight_decay: 0.0
+random_crop: false
+augment_flip_rotate: false
+
+# Training hyperparameters
+batch_size: 128
+num_epochs: 100
+learning_rate: 0.01
+momentum: 0.9
+optimizer: sgd
+lr_schedule: null
+
+# Preprocessing
+center_crop_size: 28
+
+# Logging
+use_wandb: false
+wandb_project: FOLI-Project
+wandb_entity: alirezasakhaeirad
+save_dir: ./checkpoints
+log_interval: 10
+
+# Reproducibility
+seed: 42
+device: cuda
+

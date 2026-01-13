@@ -1,0 +1,40 @@
+# Random Labels with Random Crop - Appendix E, Table 4
+# Tests if data augmentation prevents fitting random labels
+# Finding: Inception achieves 99.93% training accuracy
+
+model_name: small_inception
+dataset: cifar10
+data_root: ./data
+
+# Complete label randomization
+randomization: random_labels
+corruption_prob: 0.0
+randomization_seed: 42
+
+# Enable random crop on random labels
+weight_decay: 0.0
+random_crop: true
+augment_flip_rotate: false
+
+# Training hyperparameters
+batch_size: 128
+num_epochs: 100
+learning_rate: 0.01
+momentum: 0.9
+optimizer: sgd
+lr_schedule: null
+
+# Preprocessing
+center_crop_size: 28
+
+# Logging
+use_wandb: false
+wandb_project: FOLI-Project
+wandb_entity: alirezasakhaeirad
+save_dir: ./checkpoints
+log_interval: 10
+
+# Reproducibility
+seed: 42
+device: cuda
+
