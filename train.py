@@ -52,7 +52,12 @@ def get_model(config: ExperimentConfig):
     }
     
     model_fn = model_map[config.model_name]
-    return model_fn(num_classes=config.num_classes, input_shape=config.input_shape)
+    
+    # Adjust input shape based on center_crop_size
+    # CNNs work with any size, but MLPs need exact dimensions
+    actual_input_shape = (config.input_shape[0], config.center_crop_size, config.center_crop_size)
+    
+    return model_fn(num_classes=config.num_classes, input_shape=actual_input_shape)
 
 
 def get_dataloaders(config: ExperimentConfig):
