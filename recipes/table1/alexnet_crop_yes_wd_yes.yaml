@@ -1,7 +1,7 @@
 # Table 1: AlexNet with crop augmentation and weight decay
 
 # Experiment identification
-experiment_id: alexnet_cifar10_crop_wd0.00005
+experiment_id: alexnet_cifar10_crop_wd0.00001
 
 # Model configuration
 model:
@@ -29,7 +29,7 @@ training:
 
 # Regularization
 regularization:
-  weight_decay: 0.00005
+  weight_decay: 0.00001
 
 # Early stopping
 early_stopping:
