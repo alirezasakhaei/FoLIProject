@@ -22,4 +22,5 @@ def load_checkpoint(checkpoint_path, model, optimizer, scheduler=None):
     previous_metrics = checkpoint.get('all_metrics', {})
 
     print(f"Resuming from epoch {start_epoch}, best acc: {best_acc:.2f}%")
+    
     return start_epoch, best_acc, previous_metrics

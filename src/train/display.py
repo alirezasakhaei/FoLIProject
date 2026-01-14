@@ -7,7 +7,17 @@ from .utils import get_model_params_info
 
 
 def get_experiment_id(config: ExperimentConfig) -> str:
-    """Generate unique experiment identifier from config."""
+    """
+    Get experiment identifier from config.
+    
+    If experiment_id is set in config, use it directly.
+    Otherwise, generate one from model, dataset, and regularization settings.
+    """
+    # Use explicit experiment_id if provided
+    if config.experiment_id:
+        return config.experiment_id
+    
+    # Otherwise, generate from config
     model_name = config.model_name
     dataset = config.data.dataset
     

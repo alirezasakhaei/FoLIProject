@@ -1,6 +1,9 @@
 # Table 1: Inception baseline (no crop augmentation, no weight decay)
 # This is the baseline configuration with no explicit regularization
 
+# Experiment identification
+experiment_id: inception_cifar10_baseline
+
 # Model configuration
 model:
   model_name: inception

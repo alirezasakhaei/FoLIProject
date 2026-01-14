@@ -48,6 +48,9 @@ class ExperimentConfig:
     # Optimizer
     optimizer: Literal['sgd', 'adam'] = 'sgd'
 
+    # Experiment identification
+    experiment_id: Optional[str] = None  # Unique identifier for this experiment
+
     # Logging and checkpointing
     use_wandb: bool = False
     wandb_project: str = 'FOLI-Project'
@@ -164,6 +167,7 @@ class ExperimentConfig:
     def to_dict(self):
         """Convert config to dictionary for logging."""
         return {
+            'experiment_id': self.experiment_id,
             'model_name': self.model_name,
             'num_classes': self.num_classes,
             'input_shape': self.input_shape,

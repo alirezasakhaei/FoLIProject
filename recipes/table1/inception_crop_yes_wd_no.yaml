@@ -1,5 +1,8 @@
 # Table 1: Inception with crop augmentation, no weight decay
 
+# Experiment identification
+experiment_id: inception_cifar10_crop
+
 # Model configuration
 model:
   model_name: inception

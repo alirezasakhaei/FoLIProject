@@ -14,7 +14,7 @@ import torch.nn as nn
 from src.config import ExperimentConfig, get_optimizer, get_scheduler
 from .utils import set_seed, get_model, get_dataloaders
 from .display import print_run_card, get_experiment_id
-from .experiment import check_experiment_completed, save_results
+from .experiment import check_experiment_completed, save_results, check_early_stopping_from_results
 from .checkpoint import load_checkpoint
 from .trainer import train_epoch, test
 
@@ -78,25 +78,13 @@ def main(config: ExperimentConfig):
 
         return  # Exit without re-running
 
-    # Initialize wandb
+    # Initialize wandb (use experiment_id for run name)
     import wandb
-
-    # Create descriptive run name
-    reg_parts = []
-    if config.weight_decay > 0:
-        reg_parts.append(f"wd{config.weight_decay}")
-    if config.data.random_crop:
-        reg_parts.append("crop")
-    if config.data.augment_flip_rotate:
-        reg_parts.append("aug")
-    reg_suffix = "_" + "_".join(reg_parts) if reg_parts else "_baseline"
-
-    wandb_run_name = f"{config.model_name}_{config.data.dataset}{reg_suffix}"
 
     wandb.init(
         project=config.wandb_project,
         entity=config.wandb_entity,
-        name=wandb_run_name,
+        name=experiment_id,  # Use experiment_id as run name
         config=config.to_dict(),
     )
 
@@ -123,10 +111,39 @@ def main(config: ExperimentConfig):
         checkpoint_path, model, optimizer, scheduler
     )
 
+    # Check if early stopping should have been triggered based on results
+    should_stop, stop_reason = check_early_stopping_from_results(config, results_dir)
+    if should_stop:
+        print(f"\n{'='*60}")
+        print(f"⚠️  TRAINING ALREADY COMPLETED (EARLY STOPPING)")
+        print(f"{'='*60}")
+        print(f"{stop_reason}")
+        print(f"Best test accuracy: {best_test_acc:.2f}%")
+        if previous_metrics:
+            print(f"Final test accuracy: {previous_metrics.get('test_acc', [0])[-1]:.2f}%")
+        print(f"\nTo re-run this experiment, delete:")
+        print(f"  - Checkpoint: {checkpoint_path}")
+        print(f"  - Results in: {results_dir}")
+        print(f"{'='*60}\n")
+        wandb.finish()
+        return
+
     # Track metrics for all epochs (restore from checkpoint if resuming)
     if previous_metrics:
         all_metrics = previous_metrics
         print(f"✓ Restored {len(all_metrics.get('epochs', []))} previous epochs of metrics")
+        
+        # Log previous metrics to wandb
+        print(f"✓ Logging {len(all_metrics.get('epochs', []))} previous epochs to wandb...")
+        for i, epoch in enumerate(all_metrics.get('epochs', [])):
+            wandb.log({
+                'epoch': epoch,
+                'train_loss': all_metrics['train_loss'][i],
+                'train_acc': all_metrics['train_acc'][i],
+                'test_loss': all_metrics['test_loss'][i],
+                'test_acc': all_metrics['test_acc'][i],
+                'lr': optimizer.param_groups[0]['lr'],
+            }, step=epoch)
     else:
         all_metrics = {
             'train_loss': [],
