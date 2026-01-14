@@ -60,6 +60,7 @@ class ExperimentConfig:
     # Early stopping
     early_stopping_enabled: bool = True  # Enable early stopping
     early_stopping_window: int = 6  # Number of consecutive epochs to check
+    early_stopping_min_epochs: int = 25  # Minimum epochs before early stopping can trigger
     
     # Optimizer
     optimizer: Literal['sgd', 'adam'] = 'sgd'
@@ -172,6 +173,7 @@ class ExperimentConfig:
             'explicit_reg_off': self.explicit_reg_off,
             'early_stopping_enabled': self.early_stopping_enabled,
             'early_stopping_window': self.early_stopping_window,
+            'early_stopping_min_epochs': self.early_stopping_min_epochs,
         }
 
     def __str__(self):

@@ -147,7 +147,7 @@ def print_run_card(config: ExperimentConfig, model, train_loader, test_loader, o
     print(f"│ Num Epochs           : {config.num_epochs:<54} │")
     print(f"│ Total Training Steps : {total_steps:,}{'':<54}"[:-54] + f"{total_steps:>20,} │")
     print(f"│ Est. Samples Seen    : {total_samples:,}{'':<54}"[:-54] + f"{total_samples:>20,} │")
-    early_stopping_status = f"Enabled (window={config.early_stopping_window})" if config.early_stopping_enabled else "Disabled"
+    early_stopping_status = f"Enabled (window={config.early_stopping_window}, min_epochs={config.early_stopping_min_epochs})" if config.early_stopping_enabled else "Disabled"
     print(f"│ Early Stopping       : {early_stopping_status:<54} │")
     print("└───────────────────────────────────────────────────────────────────────────┘")
     
@@ -583,7 +583,7 @@ def main(config: ExperimentConfig):
         
         # Check early stopping condition
         early_stop = False
-        if config.early_stopping_enabled and len(all_metrics['test_acc']) >= config.early_stopping_window:
+        if config.early_stopping_enabled and epoch >= config.early_stopping_min_epochs and len(all_metrics['test_acc']) >= config.early_stopping_window:
             # Get test accuracies for the last 'window' epochs
             recent_test_accs = all_metrics['test_acc'][-config.early_stopping_window:]
             acc_range = max(recent_test_accs) - min(recent_test_accs)
@@ -592,6 +592,7 @@ def main(config: ExperimentConfig):
                 print(f"\n{'='*60}")
                 print(f"⚠️  EARLY STOPPING TRIGGERED")
                 print(f"{'='*60}")
+                print(f"Minimum epochs reached: {epoch} >= {config.early_stopping_min_epochs}")
                 print(f"Test accuracy range over last {config.early_stopping_window} epochs: {acc_range:.4f}% < 1.0%")
                 print(f"Recent test accuracies: {[f'{acc:.2f}' for acc in recent_test_accs]}")
                 print(f"Stopping training and saving model...")
@@ -690,6 +691,8 @@ if __name__ == '__main__':
                        help='Enable early stopping when test accuracy plateaus')
     parser.add_argument('--early_stopping_window', type=int, default=10,
                        help='Number of consecutive epochs to check for early stopping')
+    parser.add_argument('--early_stopping_min_epochs', type=int, default=25,
+                       help='Minimum epochs before early stopping can trigger (default: 25)')
     
     # Logging
     parser.add_argument('--use_wandb', action='store_true')
@@ -735,6 +738,7 @@ if __name__ == '__main__':
             lr_schedule=args.lr_schedule,
             early_stopping_enabled=args.early_stopping,
             early_stopping_window=args.early_stopping_window,
+            early_stopping_min_epochs=args.early_stopping_min_epochs,
             use_wandb=args.use_wandb,
             wandb_project=args.wandb_project,
             wandb_entity=args.wandb_entity,
