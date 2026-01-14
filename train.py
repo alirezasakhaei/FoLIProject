@@ -541,7 +541,7 @@ if __name__ == '__main__':
     # Training
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--num_epochs', type=int, default=100)
-    parser.add_argument('--lr', type=float, default=0.01)
+    parser.add_argument('--lr', type=float, default=0.1)
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adam'])
     parser.add_argument('--lr_schedule', type=str, default=None, choices=[None, 'step', 'cosine', 'exponential'])
@@ -565,6 +565,8 @@ if __name__ == '__main__':
     if args.config:
         print(f"Loading configuration from {args.config}")
         config = ExperimentConfig.from_yaml(args.config)
+        print(f"DEBUG: Loaded LR from YAML: {config.learning_rate}")
+        print(f"DEBUG: Loaded Schedule from YAML: {config.lr_schedule}")
         # Override settings from CLI if provided
         if args.use_wandb:
             config.use_wandb = True

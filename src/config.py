@@ -53,9 +53,9 @@ class ExperimentConfig:
     # Training hyperparameters
     batch_size: int = 128
     num_epochs: int = 100
-    learning_rate: float = 0.01
+    learning_rate: float = 0.1
     momentum: float = 0.9
-    lr_schedule: Optional[str] = None  # e.g., 'step', 'cosine', 'exponential'
+    lr_schedule: Optional[str] = 'exponential'  # e.g., 'step', 'cosine', 'exponential'
     
     # Optimizer
     optimizer: Literal['sgd', 'adam'] = 'sgd'
