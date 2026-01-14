@@ -41,6 +41,134 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 
+def get_model_params_info(model):
+    """
+    Get detailed parameter count information for a model.
+    
+    Returns:
+        dict with total_params, paper_params (excl. BN), trainable_params, non_trainable_params
+    """
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    non_trainable_params = total_params - trainable_params
+    
+    # Paper convention: count Conv/FC params but EXCLUDE BatchNorm params (matches Table 1)
+    paper_params = 0
+    for name, p in model.named_parameters():
+        if ".bn." not in name and "bn." not in name:
+            paper_params += p.numel()
+    
+    return {
+        'total_params': total_params,
+        'paper_params': paper_params,  # Excludes BatchNorm (Table 1 convention)
+        'trainable_params': trainable_params,
+        'non_trainable_params': non_trainable_params,
+    }
+
+
+def print_run_card(config: ExperimentConfig, model, train_loader, test_loader, optimizer, scheduler, device):
+    """
+    Print a detailed run card with all experiment information.
+    """
+    params_info = get_model_params_info(model)
+    
+    # Get scheduler info
+    scheduler_info = "None"
+    if scheduler is not None:
+        scheduler_type = type(scheduler).__name__
+        if hasattr(scheduler, 'milestones'):
+            scheduler_info = f"{scheduler_type} (milestones={list(scheduler.milestones)}, gamma={scheduler.gamma})"
+        elif hasattr(scheduler, 'T_max'):
+            scheduler_info = f"{scheduler_type} (T_max={scheduler.T_max})"
+        elif hasattr(scheduler, 'gamma'):
+            scheduler_info = f"{scheduler_type} (gamma={scheduler.gamma})"
+        else:
+            scheduler_info = scheduler_type
+    
+    # Calculate total training steps
+    steps_per_epoch = len(train_loader)
+    total_steps = steps_per_epoch * config.num_epochs
+    
+    # Estimate samples seen (accounting for last batch potentially being smaller)
+    approx_samples_per_epoch = len(train_loader.dataset)
+    total_samples = approx_samples_per_epoch * config.num_epochs
+    
+    print("\n" + "="*80)
+    print("RUN CARD - EXPERIMENT CONFIGURATION")
+    print("="*80)
+    
+    print("\n┌─ EXPERIMENT METADATA ─────────────────────────────────────────────────────┐")
+    print(f"│ Experiment ID        : {get_experiment_id(config):<54} │")
+    print(f"│ Timestamp            : {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<54} │")
+    print(f"│ Device               : {str(device):<54} │")
+    print(f"│ Random Seed          : {config.seed:<54} │")
+    print("└───────────────────────────────────────────────────────────────────────────┘")
+    
+    print("\n┌─ MODEL ARCHITECTURE ──────────────────────────────────────────────────────┐")
+    print(f"│ Model Name           : {config.model_name:<54} │")
+    print(f"│ Input Shape          : {str(config.input_shape):<54} │")
+    print(f"│ Effective Shape      : ({config.input_shape[0]}, {config.center_crop_size}, {config.center_crop_size}){'':<39} │")
+    print(f"│ Num Classes          : {config.num_classes:<54} │")
+    print(f"│ Paper Params (no BN) : {params_info['paper_params']:,}{'':<54}"[:-54] + f"{params_info['paper_params']:>20,} │")
+    print(f"│ Total Parameters     : {params_info['total_params']:,}{'':<54}"[:-54] + f"{params_info['total_params']:>20,} │")
+    print(f"│ Trainable Params     : {params_info['trainable_params']:,}{'':<54}"[:-54] + f"{params_info['trainable_params']:>20,} │")
+    print(f"│ Non-trainable Params : {params_info['non_trainable_params']:,}{'':<54}"[:-54] + f"{params_info['non_trainable_params']:>20,} │")
+    print("└───────────────────────────────────────────────────────────────────────────┘")
+    
+    print("\n┌─ DATASET & DATA LOADING ──────────────────────────────────────────────────┐")
+    print(f"│ Dataset              : {config.dataset.upper():<54} │")
+    print(f"│ Train Samples        : {len(train_loader.dataset):,}{'':<54}"[:-54] + f"{len(train_loader.dataset):>20,} │")
+    print(f"│ Test Samples         : {len(test_loader.dataset):,}{'':<54}"[:-54] + f"{len(test_loader.dataset):>20,} │")
+    print(f"│ Batch Size           : {config.batch_size:<54} │")
+    print(f"│ Steps per Epoch      : {steps_per_epoch:,}{'':<54}"[:-54] + f"{steps_per_epoch:>20,} │")
+    print(f"│ Center Crop Size     : {config.center_crop_size}x{config.center_crop_size}{'':<52} │")
+    print("└───────────────────────────────────────────────────────────────────────────┘")
+    
+    print("\n┌─ RANDOMIZATION & CORRUPTION ──────────────────────────────────────────────┐")
+    randomization_display = config.randomization if config.randomization else "None (True Labels)"
+    print(f"│ Randomization Type   : {randomization_display:<54} │")
+    if config.randomization == 'partial_corrupt':
+        print(f"│ Corruption Prob      : {config.corruption_prob:<54.2%} │")
+    print(f"│ Randomization Seed   : {config.randomization_seed if config.randomization_seed else 'N/A':<54} │")
+    print("└───────────────────────────────────────────────────────────────────────────┘")
+    
+    print("\n┌─ REGULARIZATION TECHNIQUES ───────────────────────────────────────────────┐")
+    print(f"│ Explicit Reg OFF     : {str(config.explicit_reg_off):<54} │")
+    print(f"│ Weight Decay         : {config.weight_decay:<54} │")
+    print(f"│ Random Crop          : {str(config.random_crop):<54} │")
+    print(f"│ Augment (Flip+Rotate): {str(config.augment_flip_rotate):<54} │")
+    print("└───────────────────────────────────────────────────────────────────────────┘")
+    
+    print("\n┌─ OPTIMIZATION & TRAINING ─────────────────────────────────────────────────┐")
+    print(f"│ Optimizer            : {config.optimizer.upper():<54} │")
+    print(f"│ Learning Rate        : {config.learning_rate:<54} │")
+    print(f"│ Momentum             : {config.momentum:<54} │")
+    print(f"│ LR Scheduler         : {scheduler_info:<54} │")
+    print(f"│ Num Epochs           : {config.num_epochs:<54} │")
+    print(f"│ Total Training Steps : {total_steps:,}{'':<54}"[:-54] + f"{total_steps:>20,} │")
+    print(f"│ Est. Samples Seen    : {total_samples:,}{'':<54}"[:-54] + f"{total_samples:>20,} │")
+    print("└───────────────────────────────────────────────────────────────────────────┘")
+    
+    if config.use_wandb:
+        print("\n┌─ LOGGING & TRACKING ──────────────────────────────────────────────────────┐")
+        print(f"│ Weights & Biases     : Enabled{'':<49} │")
+        print(f"│ W&B Project          : {config.wandb_project:<54} │")
+        print(f"│ W&B Entity           : {config.wandb_entity if config.wandb_entity else 'N/A':<54} │")
+        print(f"│ Save Directory       : {config.save_dir:<54} │")
+        print(f"│ Log Interval         : Every {config.log_interval} batches{'':<41} │")
+        print("└───────────────────────────────────────────────────────────────────────────┘")
+    else:
+        print("\n┌─ LOGGING & TRACKING ──────────────────────────────────────────────────────┐")
+        print(f"│ Weights & Biases     : Disabled{'':<48} │")
+        print(f"│ Save Directory       : {config.save_dir:<54} │")
+        print(f"│ Log Interval         : Every {config.log_interval} batches{'':<41} │")
+        print("└───────────────────────────────────────────────────────────────────────────┘")
+    
+    print("\n" + "="*80)
+    print("Starting training...")
+    print("="*80 + "\n")
+
+
 def get_model(config: ExperimentConfig):
     """Get model based on config."""
     model_map = {
@@ -314,8 +442,6 @@ def main(config: ExperimentConfig):
     else:
         device = torch.device('cpu')
     
-    print(f"Using device: {device}")
-    
     # Create directories
     os.makedirs(config.save_dir, exist_ok=True)
     results_dir = './results'
@@ -323,7 +449,6 @@ def main(config: ExperimentConfig):
     
     # Check if experiment already completed
     experiment_id = get_experiment_id(config)
-    print(f"\nExperiment ID: {experiment_id}")
     
     is_completed, existing_results = check_experiment_completed(config, results_dir)
     
@@ -379,26 +504,17 @@ def main(config: ExperimentConfig):
     
     # Get model
     model = get_model(config).to(device)
-    print(f"\nModel: {config.model_name}")
-    print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
     
     # Get dataloaders
     train_loader, test_loader = get_dataloaders(config)
-    print(f"\nDataset: {config.dataset}")
-    print(f"Train samples: {len(train_loader.dataset)}")
-    print(f"Test samples: {len(test_loader.dataset)}")
-    print(f"Randomization: {config.randomization}")
-    print(f"Explicit regularization off: {config.explicit_reg_off}")
     
     # Setup training
     criterion = nn.CrossEntropyLoss()
     optimizer = get_optimizer(model, config)
     scheduler = get_scheduler(optimizer, config)
     
-    print(f"\nOptimizer: {config.optimizer}")
-    print(f"Learning rate: {config.learning_rate}")
-    print(f"Weight decay: {config.weight_decay}")
-    print(f"Momentum: {config.momentum}")
+    # Print detailed run card
+    print_run_card(config, model, train_loader, test_loader, optimizer, scheduler, device)    
     
     # Try to load checkpoint (use experiment ID for unique naming)
     checkpoint_path = os.path.join(

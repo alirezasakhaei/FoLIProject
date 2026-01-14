@@ -162,11 +162,14 @@ class ExperimentConfig:
             'num_epochs': self.num_epochs,
             'learning_rate': self.learning_rate,
             'momentum': self.momentum,
+            'lr_schedule': self.lr_schedule,
             'optimizer': self.optimizer,
             'seed': self.seed,
             'explicit_reg_off': self.explicit_reg_off,
         }
 
+    def __str__(self):
+        return str(self.to_dict())
 
 def get_optimizer(model, config: ExperimentConfig):
     """

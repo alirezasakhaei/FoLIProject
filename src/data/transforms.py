@@ -13,23 +13,32 @@ import numpy as np
 
 class PerImageWhitening:
     """
-    Per-image whitening as described in Zhang et al. 2017.
-    Subtracts mean and divides by adjusted standard deviation.
-    """
-    def __init__(self, epsilon=1e-8):
-        self.epsilon = epsilon
+    Per-image whitening matching TensorFlow's per_image_standardization.
     
+    TensorFlow formula: (x - mean) / adjusted_stddev
+    where adjusted_stddev = max(stddev, 1.0 / sqrt(num_elements))
+    
+    This matches the exact behavior from Zhang et al. 2017's TensorFlow implementation.
+    """
     def __call__(self, tensor):
         """
         Args:
             tensor: PyTorch tensor of shape (C, H, W)
         Returns:
-            Whitened tensor
+            Whitened tensor matching TF per_image_standardization
         """
+        # Compute mean and std over all elements in the image
         mean = tensor.mean()
-        std = tensor.std()
-        adjusted_std = max(std, self.epsilon)
-        return (tensor - mean) / adjusted_std
+        # Use unbiased=False to match TensorFlow's population std
+        std = tensor.std(unbiased=False)
+        
+        # TensorFlow's adjusted stddev to prevent division by zero
+        # adjusted_stddev = max(stddev, 1.0 / sqrt(num_elements))
+        num_elements = tensor.numel()
+        adjusted_stddev = max(std.item(), 1.0 / (num_elements ** 0.5))
+        
+        return (tensor - mean) / adjusted_stddev
+
 
 
 class ToFloat:

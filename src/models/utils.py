@@ -1,5 +1,6 @@
 """
 Shared utility modules and functions for Zhang et al. 2017 models.
+Based on paper 1611.03530v2 (arXiv).
 """
 import torch
 import torch.nn as nn
@@ -28,15 +29,92 @@ def get_flattened_size(model_fe, input_shape):
     return output.view(1, -1).size(1)
 
 
+class ConvModule(nn.Module):
+    """
+    Conv Module from Zhang et al. 2017:
+    Conv -> BatchNorm -> ReLU
+    """
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, use_bn=True):
+        super(ConvModule, self).__init__()
+        # When using BN, bias in conv is redundant (BN has its own bias)
+        layers = [
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, bias=not use_bn)
+        ]
+        if use_bn:
+            layers.append(nn.BatchNorm2d(out_channels))
+        layers.append(nn.ReLU(True))
+        self.block = nn.Sequential(*layers)
+    
+    def forward(self, x):
+        return self.block(x)
+
+
+class InceptionModule2Branch(nn.Module):
+    """
+    2-Branch Inception Module from Zhang et al. 2017 (Figure 3):
+    - Path A: 1×1 conv with ch1 filters (stride 1)
+    - Path B: 3×3 conv with ch3 filters (stride 1)
+    - Output: Concatenate channels (ch1 + ch3)
+    """
+    def __init__(self, in_channels, ch1, ch3, use_bn=True):
+        """
+        Args:
+            in_channels: Number of input channels
+            ch1: Number of filters in 1×1 conv path
+            ch3: Number of filters in 3×3 conv path
+            use_bn: Whether to use batch normalization
+        """
+        super(InceptionModule2Branch, self).__init__()
+        
+        # Path A: 1×1 conv
+        self.path_a = ConvModule(in_channels, ch1, kernel_size=1, use_bn=use_bn)
+        
+        # Path B: 3×3 conv
+        self.path_b = ConvModule(in_channels, ch3, kernel_size=3, padding=1, use_bn=use_bn)
+    
+    def forward(self, x):
+        return torch.cat([self.path_a(x), self.path_b(x)], dim=1)
+
+
+class DownsampleModule(nn.Module):
+    """
+    Downsample Module from Zhang et al. 2017 (Figure 3):
+    - Path A: 3×3 conv with ch3 filters, stride 2
+    - Path B: max-pool with 3×3 kernel, stride 2
+    - Output: Concatenate channels (ch3 + in_channels)
+    """
+    def __init__(self, in_channels, ch3, use_bn=True):
+        """
+        Args:
+            in_channels: Number of input channels
+            ch3: Number of filters in 3×3 conv path
+            use_bn: Whether to use batch normalization
+        """
+        super(DownsampleModule, self).__init__()
+        
+        # Path A: 3×3 conv, stride 2
+        self.path_a = ConvModule(in_channels, ch3, kernel_size=3, stride=2, padding=1, use_bn=use_bn)
+        
+        # Path B: 3×3 max pool, stride 2
+        self.path_b = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+    
+    def forward(self, x):
+        return torch.cat([self.path_a(x), self.path_b(x)], dim=1)
+
+
+# Legacy 4-branch Inception module for backward compatibility
 class InceptionModule(nn.Module):
     """
-    Inception module with four parallel branches:
+    Inception module with four parallel branches (GoogleNet-style):
     - 1x1 convolution
     - 1x1 -> 3x3 convolution
     - 1x1 -> 5x5 convolution
     - 3x3 max pool -> 1x1 convolution
     
     All branches are concatenated along the channel dimension.
+    
+    NOTE: This is NOT the module used in Zhang et al. 2017. 
+    Use InceptionModule2Branch for that paper's architecture.
     """
     def __init__(self, in_channels, n1x1, n3x3reduce, n3x3, n5x5reduce, n5x5, pool_proj, use_bn=True):
         """

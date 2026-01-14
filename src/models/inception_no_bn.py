@@ -1,59 +1,117 @@
 """
-Inception network from Zhang et al. 2017 (without Batch Normalization).
-Architecture from paper 1611.03530v2, Table 1.
+Small Inception network from Zhang et al. 2017 (without Batch Normalization).
+Architecture from paper 1611.03530v2, Figure 3 and Table 1.
+
+This is the same architecture as inception.py but with BatchNorm disabled.
+Used to study the effect of batch normalization on generalization.
+
+Exact Figure 3 graph (CIFAR-10 center-cropped to 28x28).
+Note: conv_bias=True is required to match Table 1 parameter count.
 """
+import torch
 import torch.nn as nn
-from .utils import InceptionModule
 
 
-class InceptionNoBN(nn.Module):
-    """
-    Inception network adapted for CIFAR-10 (without Batch Normalization).
-    
-    Architecture:
-    - Initial 3x3 conv with 96 filters (no BN)
-    - Stage 1: 2 Inception modules + max pool downsample
-    - Stage 2: 2 Inception modules
-    - Global average pooling
-    - Linear classifier
-    
-    Parameters: 1,649,402
-    """
-    def __init__(self, num_classes=10, input_shape=(3, 32, 32)):
-        """
-        Args:
-            num_classes: Number of output classes
-            input_shape: Tuple of (C, H, W) for input dimensions
-        """
-        super(InceptionNoBN, self).__init__()
-        
-        self.features = nn.Sequential(
-            nn.Conv2d(input_shape[0], 96, kernel_size=3, padding=1),
-            nn.ReLU(True),
-            
-            # Stage 1
-            InceptionModule(96, 32, 32, 32, 8, 8, 32, use_bn=False),  # Out: 32+32+8+32 = 104
-            InceptionModule(104, 32, 32, 48, 8, 8, 32, use_bn=False),  # Out: 32+48+8+32 = 120
-            nn.MaxPool2d(3, stride=2, padding=1),  # Downsample
-            
-            # Stage 2
-            InceptionModule(120, 112, 32, 48, 8, 32, 48, use_bn=False),  # Out: 112+48+32+48 = 240
-            InceptionModule(240, 160, 112, 224, 24, 64, 64, use_bn=False),  # Out: 160+224+64+64 = 512
-        )
-        
-        # Global average pooling to handle variable input sizes
-        self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
-        
-        self.linear = nn.Linear(512, num_classes)
+class ConvModuleNoBN(nn.Module):
+    # Figure 3: Conv -> ReLU (no BN)
+    def __init__(self, in_ch: int, out_ch: int, k: int, stride: int, conv_bias: bool = True):
+        super().__init__()
+        pad = k // 2
+        self.conv = nn.Conv2d(in_ch, out_ch, kernel_size=k, stride=stride, padding=pad, bias=conv_bias)
+        self.act = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        out = self.features(x)
-        out = self.global_pool(out)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        return self.act(self.conv(x))
+
+
+class InceptionModuleNoBN(nn.Module):
+    # Figure 3: parallel 1x1 and 3x3 ConvModules, concat channels (no BN)
+    def __init__(self, in_ch: int, ch1: int, ch3: int, conv_bias: bool = True):
+        super().__init__()
+        self.b1 = ConvModuleNoBN(in_ch, ch1, k=1, stride=1, conv_bias=conv_bias)
+        self.b3 = ConvModuleNoBN(in_ch, ch3, k=3, stride=1, conv_bias=conv_bias)
+
+    def forward(self, x):
+        return torch.cat([self.b1(x), self.b3(x)], dim=1)
+
+
+class DownsampleModuleNoBN(nn.Module):
+    # Figure 3: parallel (3x3 stride2 ConvModule) and (3x3 stride2 MaxPool), concat channels (no BN)
+    def __init__(self, in_ch: int, ch3: int, conv_bias: bool = True):
+        super().__init__()
+        self.conv = ConvModuleNoBN(in_ch, ch3, k=3, stride=2, conv_bias=conv_bias)
+        self.pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+    def forward(self, x):
+        return torch.cat([self.conv(x), self.pool(x)], dim=1)
+
+
+class SmallInceptionCIFAR10NoBN(nn.Module):
+    """
+    Exact Figure 3 graph (CIFAR-10 center-cropped to 28x28) without Batch Normalization.
+    Note: conv_bias=True is required to match Table 1 parameter count.
+    """
+    def __init__(self, num_classes: int = 10, conv_bias: bool = True):
+        super().__init__()
+
+        # 28x28x3 -> 28x28x96
+        self.stem = ConvModuleNoBN(3, 96, k=3, stride=1, conv_bias=conv_bias)
+
+        # Left column
+        self.i1 = InceptionModuleNoBN(96, 32, 32, conv_bias=conv_bias)   # -> 64
+        self.i2 = InceptionModuleNoBN(64, 32, 48, conv_bias=conv_bias)   # -> 80
+        self.d1 = DownsampleModuleNoBN(80, 80, conv_bias=conv_bias)      # -> 160, 14x14
+
+        # Middle column (TOP -> BOTTOM exactly as in Figure 3)
+        self.i3 = InceptionModuleNoBN(160, 112, 48, conv_bias=conv_bias) # -> 160
+        self.i4 = InceptionModuleNoBN(160, 96, 64, conv_bias=conv_bias)  # -> 160
+        self.i5 = InceptionModuleNoBN(160, 80, 80, conv_bias=conv_bias)  # -> 160
+        self.i6 = InceptionModuleNoBN(160, 48, 96, conv_bias=conv_bias)  # -> 144
+        self.d2 = DownsampleModuleNoBN(144, 96, conv_bias=conv_bias)     # -> 240, 7x7
+
+        # Right column
+        self.i7 = InceptionModuleNoBN(240, 176, 160, conv_bias=conv_bias) # -> 336
+        self.i8 = InceptionModuleNoBN(336, 176, 160, conv_bias=conv_bias) # -> 336
+
+        self.pool = nn.AvgPool2d(kernel_size=7, stride=1)  # global 7x7
+        self.fc = nn.Linear(336, num_classes)
+
+    def forward(self, x):
+        x = self.stem(x)
+        x = self.i1(x); x = self.i2(x); x = self.d1(x)
+        x = self.i3(x); x = self.i4(x); x = self.i5(x); x = self.i6(x); x = self.d2(x)
+        x = self.i7(x); x = self.i8(x)
+        x = self.pool(x)
+        x = torch.flatten(x, 1)
+        return self.fc(x)
+
+
+def paper_param_count(model: nn.Module) -> int:
+    """
+    Matches Table 1 convention:
+    count Conv/FC params but EXCLUDE BatchNorm params.
+    """
+    total = 0
+    for name, p in model.named_parameters():
+        if ".bn." in name:
+            continue
+        total += p.numel()
+    return total
 
 
 def inception_no_bn(num_classes=10, input_shape=(3, 32, 32)):
-    """Inception without batch normalization (1,649,402 params)."""
-    return InceptionNoBN(num_classes, input_shape)
+    """
+    Small Inception without batch normalization.
+    Same architecture as inception() but with BatchNorm disabled.
+    """
+    return SmallInceptionCIFAR10NoBN(num_classes=num_classes, conv_bias=True)
+
+
+if __name__ == "__main__":
+    model = SmallInceptionCIFAR10NoBN(num_classes=10, conv_bias=True)
+
+    x = torch.randn(2, 3, 28, 28)
+    y = model(x)
+    print("Output shape:", tuple(y.shape))
+
+    print("Paper-style #params (exclude BN, include conv biases):", paper_param_count(model))
