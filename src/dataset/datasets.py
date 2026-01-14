@@ -90,23 +90,3 @@ class DatasetFactory:
 
         return train_loader, test_loader
 
-
-# Backward compatibility helpers (deprecated)
-def get_cifar10_train_dataset(root='./data', random_crop=False, augment_flip_rotate=False):
-    """Get CIFAR-10 training dataset (deprecated - use DatasetFactory instead)."""
-    from .config import DataConfig
-    config = DataConfig(
-        data_root=root,
-        random_crop=random_crop,
-        augment_flip_rotate=augment_flip_rotate,
-    )
-    train_dataset, _ = DatasetFactory.create_datasets(config)
-    return train_dataset
-
-
-def get_cifar10_test_dataset(root='./data'):
-    """Get CIFAR-10 test dataset (deprecated - use DatasetFactory instead)."""
-    from .config import DataConfig
-    config = DataConfig(data_root=root)
-    _, test_dataset = DatasetFactory.create_datasets(config)
-    return test_dataset
