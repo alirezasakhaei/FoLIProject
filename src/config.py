@@ -18,12 +18,12 @@ class ExperimentConfig:
     
     # Model configuration
     model_name: Literal[
-        'small_inception',
-        'small_inception_no_bn',
+        'inception',
+        'inception_no_bn',
         'small_alexnet',
         'mlp_1x512',
         'mlp_3x512'
-    ] = 'small_inception'
+    ] = 'inception'
     num_classes: int = 10
     input_shape: tuple = (3, 32, 32)  # (C, H, W)
     
@@ -55,7 +55,7 @@ class ExperimentConfig:
     num_epochs: int = 100
     learning_rate: float = 0.01
     momentum: float = 0.9
-    lr_schedule: Optional[str] = None  # e.g., 'step', 'cosine'
+    lr_schedule: Optional[str] = None  # e.g., 'step', 'cosine', 'exponential'
     
     # Optimizer
     optimizer: Literal['sgd', 'adam'] = 'sgd'
@@ -100,8 +100,8 @@ class ExperimentConfig:
         
         # Default coefficients (can be tuned)
         defaults = {
-            'small_inception': 0.0005,
-            'small_inception_no_bn': 0.0005,
+            'inception': 0.0005,
+            'inception_no_bn': 0.0005,
             'small_alexnet': 0.0005,
             'mlp_1x512': 0.0001,
             'mlp_3x512': 0.0001,
@@ -225,6 +225,12 @@ def get_scheduler(optimizer, config: ExperimentConfig):
             optimizer,
             T_max=config.num_epochs
         )
+    elif config.lr_schedule == 'exponential':
+        # Decay by gamma every epoch
+        return lr_scheduler.ExponentialLR(
+            optimizer,
+            gamma=0.95
+        )
     else:
         raise ValueError(f"Unknown lr_schedule: {config.lr_schedule}")
 
@@ -237,7 +243,7 @@ def get_baseline_config(**kwargs) -> ExperimentConfig:
     This is the "Inception" row in Table 1.
     """
     config = ExperimentConfig(
-        model_name='small_inception',
+        model_name='inception',
         randomization=None,
         weight_decay=0.0,
         random_crop=False,
@@ -255,7 +261,7 @@ def get_random_labels_config(**kwargs) -> ExperimentConfig:
     All explicit regularization off.
     """
     config = ExperimentConfig(
-        model_name='small_inception',
+        model_name='inception',
         randomization='random_labels',
         weight_decay=0.0,
         random_crop=False,
@@ -272,7 +278,7 @@ def get_regularized_config(**kwargs) -> ExperimentConfig:
     This is for testing the effect of regularization (Table 1).
     """
     config = ExperimentConfig(
-        model_name='small_inception',
+        model_name='inception',
         randomization=None,
         weight_decay=0.0005,  # Enable weight decay
         random_crop=True,  # Enable random crop
@@ -289,7 +295,7 @@ def get_augmented_random_labels_config(**kwargs) -> ExperimentConfig:
     Tests if augmentation helps when fitting random labels.
     """
     config = ExperimentConfig(
-        model_name='small_inception',
+        model_name='inception',
         randomization='random_labels',
         weight_decay=0.0,
         random_crop=False,

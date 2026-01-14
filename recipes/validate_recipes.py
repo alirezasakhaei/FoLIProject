@@ -99,7 +99,7 @@ def main():
     print("=" * 60)
     print()
     
-    categories = ['baseline', 'randomization', 'regularization', 'ablation']
+    categories = ['baseline', 'randomization', 'regularization', 'ablation', 'table1']
     
     total_recipes = 0
     valid_recipes = 0

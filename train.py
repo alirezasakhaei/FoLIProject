@@ -21,8 +21,8 @@ from src.config import ExperimentConfig, get_optimizer, get_scheduler
 from src.data import get_cifar10_transforms, get_mnist_transforms
 from src.data import get_cifar10_dataset, get_mnist_dataset
 from src.models import (
-    small_inception,
-    small_inception_no_bn,
+    inception,
+    inception_no_bn,
     small_alexnet,
     mlp_1x512,
     mlp_3x512,
@@ -44,8 +44,8 @@ def set_seed(seed):
 def get_model(config: ExperimentConfig):
     """Get model based on config."""
     model_map = {
-        'small_inception': small_inception,
-        'small_inception_no_bn': small_inception_no_bn,
+        'inception': inception,
+        'inception_no_bn': inception_no_bn,
         'small_alexnet': small_alexnet,
         'mlp_1x512': mlp_1x512,
         'mlp_3x512': mlp_3x512,
@@ -517,8 +517,8 @@ if __name__ == '__main__':
                        help='Path to YAML config file (overrides other arguments)')
     
     # Model
-    parser.add_argument('--model', type=str, default='small_inception',
-                       choices=['small_inception', 'small_inception_no_bn', 
+    parser.add_argument('--model', type=str, default='inception',
+                       choices=['inception', 'inception_no_bn', 
                                'small_alexnet', 'mlp_1x512', 'mlp_3x512'])
     
     # Dataset
@@ -544,7 +544,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adam'])
-    parser.add_argument('--lr_schedule', type=str, default=None, choices=[None, 'step', 'cosine'])
+    parser.add_argument('--lr_schedule', type=str, default=None, choices=[None, 'step', 'cosine', 'exponential'])
     
     # Logging
     parser.add_argument('--use_wandb', action='store_true')
