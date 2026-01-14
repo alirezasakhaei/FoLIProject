@@ -86,10 +86,10 @@ Located in `stress_tests/` subdirectory:
 
 ```bash
 # Small Inception (default)
---model small_inception
+--model inception
 
 # Small Inception without BatchNorm
---model small_inception_no_bn
+--model inception_no_bn
 
 # Small AlexNet
 --model small_alexnet
@@ -164,32 +164,32 @@ Located in `stress_tests/` subdirectory:
 
 ```bash
 # 1. No regularization
---model small_inception
+--model inception
 
 # 2. Weight decay only
---model small_inception --weight_decay 0.0005
+--model inception --weight_decay 0.0005
 
 # 3. Random crop only
---model small_inception --random_crop
+--model inception --random_crop
 
 # 4. Weight decay + random crop
---model small_inception --weight_decay 0.0005 --random_crop
+--model inception --weight_decay 0.0005 --random_crop
 
 # 5. Random labels (no reg)
---model small_inception --randomization random_labels
+--model inception --randomization random_labels
 ```
 
 ### Small Inception No BN (2 configs + random labels)
 
 ```bash
 # 1. Weight decay
---model small_inception_no_bn --weight_decay 0.0005
+--model inception_no_bn --weight_decay 0.0005
 
 # 2. No regularization
---model small_inception_no_bn
+--model inception_no_bn
 
 # 3. Random labels
---model small_inception_no_bn --randomization random_labels
+--model inception_no_bn --randomization random_labels
 ```
 
 ### Small AlexNet (4 configs + random labels)
@@ -241,24 +241,24 @@ Located in `stress_tests/` subdirectory:
 
 ```bash
 # True labels
---model small_inception
+--model inception
 
 # Random labels
---model small_inception --randomization random_labels
+--model inception --randomization random_labels
 
 # Shuffled pixels
---model small_inception --randomization shuffled_pixels
+--model inception --randomization shuffled_pixels
 
 # Random pixels
---model small_inception --randomization random_pixels
+--model inception --randomization random_pixels
 
 # Gaussian noise
---model small_inception --randomization gaussian_pixels
+--model inception --randomization gaussian_pixels
 ```
 
 ## Figure 1b/1c: Corruption Sweep
 
-For each model (small_inception, small_alexnet, mlp_1x512):
+For each model (inception, small_alexnet, mlp_1x512):
 
 ```bash
 # Corruption probabilities: 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
@@ -271,7 +271,7 @@ For each model (small_inception, small_alexnet, mlp_1x512):
 
 ```bash
 # Inception
---model small_inception --randomization random_labels --weight_decay 0.0005
+--model inception --randomization random_labels --weight_decay 0.0005
 
 # AlexNet
 --model small_alexnet --randomization random_labels --weight_decay 0.0005
@@ -286,13 +286,13 @@ For each model (small_inception, small_alexnet, mlp_1x512):
 ### Random labels + random cropping
 
 ```bash
---model small_inception --randomization random_labels --random_crop
+--model inception --randomization random_labels --random_crop
 ```
 
 ### Random labels + augmentation
 
 ```bash
---model small_inception --randomization random_labels --augment_flip_rotate
+--model inception --randomization random_labels --augment_flip_rotate
 ```
 
 ## Training Hyperparameter Variations
@@ -327,7 +327,7 @@ For each model (small_inception, small_alexnet, mlp_1x512):
 ### Example 1: Baseline with W&B logging
 ```bash
 python train.py \
-  --model small_inception \
+  --model inception \
   --dataset cifar10 \
   --num_epochs 100 \
   --lr 0.01 \
@@ -337,7 +337,7 @@ python train.py \
 ### Example 2: Random labels experiment
 ```bash
 python train.py \
-  --model small_inception \
+  --model inception \
   --dataset cifar10 \
   --randomization random_labels \
   --num_epochs 100 \
@@ -347,7 +347,7 @@ python train.py \
 ### Example 3: Regularized training
 ```bash
 python train.py \
-  --model small_inception \
+  --model inception \
   --dataset cifar10 \
   --weight_decay 0.0005 \
   --random_crop \
@@ -358,7 +358,7 @@ python train.py \
 ### Example 4: Corruption sweep (single point)
 ```bash
 python train.py \
-  --model small_inception \
+  --model inception \
   --dataset cifar10 \
   --randomization partial_corrupt \
   --corruption_prob 0.5 \
@@ -380,7 +380,7 @@ The `run_experiment.sh` script automatically handles WANDB_API_KEY:
 ./run_experiment.sh --config recipes/baseline.yaml
 
 # With direct arguments
-./run_experiment.sh --model small_inception --dataset cifar10 --num_epochs 100
+./run_experiment.sh --model inception --dataset cifar10 --num_epochs 100
 ```
 
 ## Environment Variables

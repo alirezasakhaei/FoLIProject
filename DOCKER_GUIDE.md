@@ -60,7 +60,7 @@ docker run --rm \
   -v $(pwd)/data:/workspace/data \
   --gpus all \
   zhang-experiments \
-  --model small_inception \
+  --model inception \
   --dataset cifar10 \
   --num_epochs 100 \
   --lr 0.01
@@ -87,7 +87,7 @@ docker run --rm \
 
 ### Model Selection
 ```bash
---model {small_inception, small_inception_no_bn, small_alexnet, mlp_1x512, mlp_3x512}
+--model {inception, inception_no_bn, small_alexnet, mlp_1x512, mlp_3x512}
 ```
 
 ### Dataset Selection
@@ -180,7 +180,7 @@ docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace
 ```bash
 # Sweep corruption probability from 0 to 1
 for p in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0; do
-  docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model small_inception --randomization partial_corrupt --corruption_prob $p
+  docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model inception --randomization partial_corrupt --corruption_prob $p
 done
 ```
 
@@ -188,13 +188,13 @@ done
 
 ```bash
 # Inception: no reg
-docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model small_inception
+docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model inception
 
 # Inception: weight decay only
-docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model small_inception --weight_decay 0.0005
+docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model inception --weight_decay 0.0005
 
 # Inception: random crop only
-docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model small_inception --random_crop
+docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --model inception --random_crop
 
 # Inception: both
 docker run --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $(pwd)/checkpoints:/workspace/checkpoints -v $(pwd)/results:/workspace/results -v $(pwd)/data:/workspace/data --gpus all zhang-experiments --config recipes/regularized.yaml
@@ -245,10 +245,10 @@ runai submit zhang-custom \
 ```
 /workspace/
 ├── checkpoints/          # Model checkpoints (auto-resumable)
-│   ├── small_inception_cifar10_checkpoint.pth
-│   └── small_inception_cifar10_best.pth
+│   ├── inception_cifar10_checkpoint.pth
+│   └── inception_cifar10_best.pth
 ├── results/              # Experiment results (JSON files)
-│   └── small_inception_cifar10_baseline_20260113_221600.json
+│   └── inception_cifar10_baseline_20260113_221600.json
 ├── data/                 # Dataset cache
 │   └── cifar-10-batches-py/
 └── recipes/              # Experiment configurations
@@ -273,7 +273,7 @@ Results are saved as JSON files with the following structure:
 ```json
 {
   "config": {
-    "model_name": "small_inception",
+    "model_name": "inception",
     "dataset": "cifar10",
     "randomization": "random_labels",
     ...

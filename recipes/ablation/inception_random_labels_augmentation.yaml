@@ -2,7 +2,7 @@
 # Tests if flip+rotate augmentation prevents fitting random labels
 # Finding: Inception achieves 99.28% training accuracy
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

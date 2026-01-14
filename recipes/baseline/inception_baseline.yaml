@@ -1,7 +1,7 @@
 # Baseline Inception on CIFAR10 with true labels
 # Corresponds to "Inception" row in Table 1 (no explicit regularization)
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

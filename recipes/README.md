@@ -148,7 +148,7 @@ To enable W&B logging:
 
 ### Model Selection
 ```yaml
-model_name: small_inception  # or small_alexnet, mlp_1x512, mlp_3x512
+model_name: inception  # or small_alexnet, mlp_1x512, mlp_3x512
 ```
 
 ### Randomization Types

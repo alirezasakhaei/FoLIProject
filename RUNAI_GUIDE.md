@@ -311,7 +311,7 @@ python3 csub.py -n <job-name> -g 1 --node-type a100-40g \
 
 Or delete the results file:
 ```bash
-rm results/small_inception_cifar10_baseline_*.json
+rm results/inception_cifar10_baseline_*.json
 ```
 
 ### Issue: Out of Memory

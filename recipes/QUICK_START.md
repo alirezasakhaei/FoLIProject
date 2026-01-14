@@ -88,7 +88,7 @@ Every recipe is a YAML file with these key sections:
 
 ```yaml
 # Model selection
-model_name: small_inception  # or small_alexnet, mlp_1x512, mlp_3x512
+model_name: inception  # or small_alexnet, mlp_1x512, mlp_3x512
 
 # Dataset
 dataset: cifar10
@@ -231,10 +231,10 @@ After running experiments, you'll find:
 ```
 Project/
 ├── checkpoints/          # Model checkpoints
-│   ├── small_inception_cifar10_checkpoint.pth
-│   └── small_inception_cifar10_best.pth
+│   ├── inception_cifar10_checkpoint.pth
+│   └── inception_cifar10_best.pth
 ├── results/              # JSON result files
-│   └── small_inception_cifar10_baseline_20260113_123456.json
+│   └── inception_cifar10_baseline_20260113_123456.json
 └── recipes/              # All experiment configs
     ├── baseline/
     ├── randomization/

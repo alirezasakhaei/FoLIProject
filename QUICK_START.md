@@ -66,8 +66,8 @@ Partial label corruption at different levels
 
 ## 🎯 Models Available
 
-- `small_inception` - Small Inception with BatchNorm
-- `small_inception_no_bn` - Small Inception without BatchNorm
+- `inception` - Small Inception with BatchNorm
+- `inception_no_bn` - Small Inception without BatchNorm
 - `small_alexnet` - Small AlexNet
 - `mlp_3x512` - MLP with 3 hidden layers of 512 units
 - `mlp_1x512` - MLP with 1 hidden layer of 512 units

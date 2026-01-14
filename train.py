@@ -2,9 +2,9 @@
 Training script for Zhang et al. 2017 experiments.
 
 Usage:
-    python train.py --model small_inception --dataset cifar10
-    python train.py --model small_inception --randomization random_labels
-    python train.py --model small_inception --weight_decay 0.0005 --random_crop
+    python train.py --model inception --dataset cifar10
+    python train.py --model inception --randomization random_labels
+    python train.py --model inception --weight_decay 0.0005 --random_crop
 """
 import argparse
 import os

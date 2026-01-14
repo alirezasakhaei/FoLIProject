@@ -2,7 +2,7 @@
 # Tests effect of data augmentation (flip + rotate) on true labels
 # Corresponds to Appendix E augmentation experiments
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

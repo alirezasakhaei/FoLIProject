@@ -2,7 +2,7 @@
 # Tests if weight decay prevents fitting random labels
 # Finding: Inception still fits random labels with weight decay
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

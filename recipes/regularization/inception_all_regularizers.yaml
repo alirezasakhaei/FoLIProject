@@ -2,7 +2,7 @@
 # Combines weight decay + random crop on true labels
 # Tests combined effect of explicit regularization
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

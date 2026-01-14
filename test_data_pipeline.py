@@ -20,7 +20,7 @@ from src.config import (
     get_random_labels_config,
     get_optimizer,
 )
-from src.models import small_inception
+from src.models import inception
 
 
 def test_transforms():
@@ -211,7 +211,7 @@ def test_config():
     
     # Test optimizer creation
     print("\n4. Optimizer creation:")
-    model = small_inception()
+    model = inception()
     optimizer = get_optimizer(model, config_custom)
     print(f"   Optimizer type: {type(optimizer).__name__}")
     print(f"   Weight decay: {optimizer.param_groups[0]['weight_decay']}")
@@ -227,7 +227,7 @@ def test_integration():
     
     print("\n1. Creating model + data pipeline:")
     config = ExperimentConfig(
-        model_name='small_inception',
+        model_name='inception',
         dataset='cifar10',
         randomization='random_labels',
         batch_size=4,
@@ -235,7 +235,7 @@ def test_integration():
     )
     
     # Get model
-    model = small_inception(num_classes=10, input_shape=(3, 28, 28))
+    model = inception(num_classes=10, input_shape=(3, 28, 28))
     print(f"   Model: {config.model_name}")
     print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
     
@@ -292,9 +292,9 @@ if __name__ == '__main__':
         print("✓ ALL TESTS PASSED!")
         print("="*60)
         print("\nYou can now run experiments with:")
-        print("  python train.py --model small_inception --dataset cifar10")
-        print("  python train.py --model small_inception --randomization random_labels")
-        print("  python train.py --model small_inception --weight_decay 0.0005 --random_crop")
+        print("  python train.py --model inception --dataset cifar10")
+        print("  python train.py --model inception --randomization random_labels")
+        print("  python train.py --model inception --weight_decay 0.0005 --random_crop")
         print("="*60)
         
     except Exception as e:

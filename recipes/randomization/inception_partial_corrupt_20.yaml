@@ -2,7 +2,7 @@
 # Corrupt 20% of labels randomly
 # Tests intermediate noise levels
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

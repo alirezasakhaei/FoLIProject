@@ -2,7 +2,7 @@
 # Corresponds to "Inception" row in Table 1 with random labels
 # Key finding: Networks easily fit random labels with 0% training error
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

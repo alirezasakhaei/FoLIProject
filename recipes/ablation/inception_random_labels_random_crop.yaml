@@ -2,7 +2,7 @@
 # Tests if data augmentation prevents fitting random labels
 # Finding: Inception achieves 99.93% training accuracy
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

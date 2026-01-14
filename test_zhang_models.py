@@ -1,7 +1,7 @@
 import torch
 from src.models.mlp import mlp_1x512, mlp_3x512
 from src.models.small_alexnet import small_alexnet
-from src.models.small_inception import small_inception, small_inception_no_bn
+from src.models.inception import inception, inception_no_bn
 
 def test_model(name, model_fn, shapes=[(1, 3, 32, 32), (1, 3, 224, 224)]):
     print(f"Testing {name}...")
@@ -19,8 +19,8 @@ def test_model(name, model_fn, shapes=[(1, 3, 32, 32), (1, 3, 224, 224)]):
             print(f"  FAILED for shape {shape}: {e}")
 
 if __name__ == "__main__":
-    test_model("Small Inception", small_inception)
-    test_model("Small Inception No BN", small_inception_no_bn)
+    test_model("Small Inception", inception)
+    test_model("Small Inception No BN", inception_no_bn)
     test_model("Small AlexNet", small_alexnet)
     test_model("MLP 1x512", mlp_1x512)
     test_model("MLP 3x512", mlp_3x512)

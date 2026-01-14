@@ -2,7 +2,7 @@
 # Replace true images with completely random Gaussian noise
 # Tests if CNNs can fit pure noise
 
-model_name: small_inception
+model_name: inception
 dataset: cifar10
 data_root: ./data
 

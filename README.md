@@ -42,13 +42,13 @@ python test_data_pipeline.py
 ### Run a basic experiment
 ```bash
 # Train Small Inception on CIFAR-10 (baseline)
-python train.py --model small_inception --dataset cifar10
+python train.py --model inception --dataset cifar10
 
 # Train with random labels (Table 1 experiment)
-python train.py --model small_inception --randomization random_labels
+python train.py --model inception --randomization random_labels
 
 # Train with weight decay and random crop (regularization)
-python train.py --model small_inception --weight_decay 0.0005 --random_crop
+python train.py --model inception --weight_decay 0.0005 --random_crop
 ```
 
 ## Paper-Critical Features
@@ -91,10 +91,10 @@ python train.py --augment_flip_rotate
 #### BatchNorm Toggle
 ```bash
 # With BatchNorm (default)
-python train.py --model small_inception
+python train.py --model inception
 
 # Without BatchNorm
-python train.py --model small_inception_no_bn
+python train.py --model inception_no_bn
 ```
 
 ### 3. Randomization Operators (Table 1, Appendix E)
@@ -152,42 +152,42 @@ The config system tracks this with `config.explicit_reg_off` property.
 
 ```bash
 # Inception (baseline)
-python train.py --model small_inception --dataset cifar10
+python train.py --model inception --dataset cifar10
 
 # Inception with random labels
-python train.py --model small_inception --randomization random_labels
+python train.py --model inception --randomization random_labels
 
 # Inception with shuffled pixels
-python train.py --model small_inception --randomization shuffled_pixels
+python train.py --model inception --randomization shuffled_pixels
 
 # Inception with random pixels
-python train.py --model small_inception --randomization random_pixels
+python train.py --model inception --randomization random_pixels
 
 # Inception with Gaussian noise
-python train.py --model small_inception --randomization gaussian_pixels
+python train.py --model inception --randomization gaussian_pixels
 ```
 
 ### Table 4 (Appendix E): Augmentation on Random Labels
 
 ```bash
 # Random labels without augmentation
-python train.py --model small_inception --randomization random_labels
+python train.py --model inception --randomization random_labels
 
 # Random labels with augmentation
-python train.py --model small_inception --randomization random_labels --augment_flip_rotate
+python train.py --model inception --randomization random_labels --augment_flip_rotate
 
 # Random labels with weight decay
-python train.py --model small_inception --randomization random_labels --weight_decay 0.0005
+python train.py --model inception --randomization random_labels --weight_decay 0.0005
 ```
 
 ### BatchNorm Comparison
 
 ```bash
 # Small Inception with BatchNorm
-python train.py --model small_inception --dataset cifar10
+python train.py --model inception --dataset cifar10
 
 # Small Inception without BatchNorm
-python train.py --model small_inception_no_bn --dataset cifar10
+python train.py --model inception_no_bn --dataset cifar10
 ```
 
 ## Advanced Usage
@@ -213,7 +213,7 @@ python train.py --lr_schedule cosine
 ```bash
 # "Inception" row from Table 1
 python train.py \
-  --model small_inception \
+  --model inception \
   --dataset cifar10 \
   --batch_size 128 \
   --num_epochs 100 \
@@ -239,7 +239,7 @@ config = get_random_labels_config()
 
 # Custom configuration
 config = ExperimentConfig(
-    model_name='small_inception',
+    model_name='inception',
     dataset='cifar10',
     randomization='random_labels',
     weight_decay=0.0005,
@@ -256,7 +256,7 @@ config = ExperimentConfig(
 .
 ├── src/
 │   ├── models/              # Neural network architectures
-│   │   ├── small_inception.py
+│   │   ├── inception.py
 │   │   ├── small_alexnet.py
 │   │   ├── mlp.py
 │   │   └── utils.py

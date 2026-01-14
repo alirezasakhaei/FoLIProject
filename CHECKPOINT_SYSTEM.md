@@ -34,10 +34,10 @@ This document explains the checkpoint, resumption, and completion detection syst
 
 ```
 checkpoints/
-├── small_inception_cifar10_baseline_checkpoint.pth       # Latest checkpoint
-├── small_inception_cifar10_baseline_best.pth             # Best model
-├── small_inception_cifar10_random_labels_checkpoint.pth  # Another experiment
-└── small_inception_cifar10_random_labels_best.pth
+├── inception_cifar10_baseline_checkpoint.pth       # Latest checkpoint
+├── inception_cifar10_baseline_best.pth             # Best model
+├── inception_cifar10_random_labels_checkpoint.pth  # Another experiment
+└── inception_cifar10_random_labels_best.pth
 ```
 
 **Checkpoint Contents:**
@@ -54,17 +54,17 @@ checkpoints/
 
 ```
 results/
-├── small_inception_cifar10_baseline_20260113_143022.json
-├── small_inception_cifar10_random_labels_20260113_150145.json
-└── small_inception_cifar10_baseline_wd0.0005_crop_20260113_153210.json
+├── inception_cifar10_baseline_20260113_143022.json
+├── inception_cifar10_random_labels_20260113_150145.json
+└── inception_cifar10_baseline_wd0.0005_crop_20260113_153210.json
 ```
 
 **Results File Contents:**
 ```json
 {
-  "experiment_id": "small_inception_cifar10_baseline",
+  "experiment_id": "inception_cifar10_baseline",
   "config": {
-    "model_name": "small_inception",
+    "model_name": "inception",
     "dataset": "cifar10",
     "randomization": null,
     "weight_decay": 0.0,
@@ -98,10 +98,10 @@ Each experiment gets a unique ID based on its configuration:
 ```
 
 Examples:
-- `small_inception_cifar10_baseline`
-- `small_inception_cifar10_random_labels`
-- `small_inception_cifar10_baseline_wd0.0005_crop`
-- `small_inception_cifar10_partial_corrupt_corrupt20`
+- `inception_cifar10_baseline`
+- `inception_cifar10_random_labels`
+- `inception_cifar10_baseline_wd0.0005_crop`
+- `inception_cifar10_partial_corrupt_corrupt20`
 
 ### Workflow
 
@@ -150,12 +150,12 @@ Examples:
 ============================================
 ⚠️  EXPERIMENT ALREADY COMPLETED
 ============================================
-Results file: ./results/small_inception_cifar10_baseline_20260113_143022.json
+Results file: ./results/inception_cifar10_baseline_20260113_143022.json
 
 To re-run this experiment, either:
   1. Add --force flag: ./run_experiment.sh --config <recipe> --force
-  2. Delete the results file: ./results/small_inception_cifar10_baseline_20260113_143022.json
-  3. Delete the checkpoint: ./checkpoints/small_inception_cifar10_baseline_checkpoint.pth
+  2. Delete the results file: ./results/inception_cifar10_baseline_20260113_143022.json
+  3. Delete the checkpoint: ./checkpoints/inception_cifar10_baseline_checkpoint.pth
 ============================================
 
 Previous Results:
@@ -245,8 +245,8 @@ If completed, you'll see the completion message and previous results.
 
 ```bash
 # Delete specific experiment checkpoint
-rm checkpoints/small_inception_cifar10_baseline_checkpoint.pth
-rm checkpoints/small_inception_cifar10_baseline_best.pth
+rm checkpoints/inception_cifar10_baseline_checkpoint.pth
+rm checkpoints/inception_cifar10_baseline_best.pth
 
 # Delete all checkpoints
 rm checkpoints/*.pth
@@ -256,7 +256,7 @@ rm checkpoints/*.pth
 
 ```bash
 # Delete specific experiment results
-rm results/small_inception_cifar10_baseline_*.json
+rm results/inception_cifar10_baseline_*.json
 
 # Delete all results
 rm results/*.json
@@ -277,7 +277,7 @@ rm -rf checkpoints/*.pth results/*.json
 import json
 
 # Load results
-with open('results/small_inception_cifar10_baseline_20260113_143022.json', 'r') as f:
+with open('results/inception_cifar10_baseline_20260113_143022.json', 'r') as f:
     results = json.load(f)
 
 # Access metrics
@@ -329,10 +329,10 @@ Checkpoints are named based on experiment configuration, not the recipe filename
 ```bash
 # These two commands will use the SAME checkpoint
 ./run_experiment.sh --config recipes/baseline/inception_baseline.yaml
-./run_experiment.sh --model small_inception --dataset cifar10
+./run_experiment.sh --model inception --dataset cifar10
 ```
 
-Both generate experiment ID: `small_inception_cifar10_baseline`
+Both generate experiment ID: `inception_cifar10_baseline`
 
 ### 2. Changing Configuration
 
@@ -340,10 +340,10 @@ If you modify the recipe configuration, it will create a NEW experiment:
 
 ```yaml
 # Original: inception_baseline.yaml
-weight_decay: 0.0  # Experiment ID: small_inception_cifar10_baseline
+weight_decay: 0.0  # Experiment ID: inception_cifar10_baseline
 
 # Modified: inception_baseline.yaml
-weight_decay: 0.0005  # NEW Experiment ID: small_inception_cifar10_baseline_wd0.0005
+weight_decay: 0.0005  # NEW Experiment ID: inception_cifar10_baseline_wd0.0005
 ```
 
 ### 3. Multiple Results Files
@@ -352,9 +352,9 @@ You can have multiple results files for the same experiment (different runs):
 
 ```
 results/
-├── small_inception_cifar10_baseline_20260113_143022.json  # First run
-├── small_inception_cifar10_baseline_20260114_091530.json  # Second run (with --force)
-└── small_inception_cifar10_baseline_20260115_163245.json  # Third run
+├── inception_cifar10_baseline_20260113_143022.json  # First run
+├── inception_cifar10_baseline_20260114_091530.json  # Second run (with --force)
+└── inception_cifar10_baseline_20260115_163245.json  # Third run
 ```
 
 The system only checks if ANY completed results file exists.

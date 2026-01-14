@@ -4,7 +4,7 @@ set -e
 # Script to run Zhang et al. 2017 experiments
 # Usage: ./run_experiment.sh --config recipes/baseline.yaml
 #    or: ./run_experiment.sh --config recipes/baseline.yaml --use_wandb --force
-#    or: ./run_experiment.sh --model small_inception --dataset cifar10 ...
+#    or: ./run_experiment.sh --model inception --dataset cifar10 ...
 
 echo "============================================"
 echo "Zhang et al. 2017 - Experiment Runner"
