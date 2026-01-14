@@ -9,25 +9,20 @@ from .utils import get_model_params_info
 def get_experiment_id(config: ExperimentConfig) -> str:
     """Generate unique experiment identifier from config."""
     model_name = config.model_name
-    dataset = config.dataset
-    randomization = config.randomization or "baseline"
-
+    dataset = config.data.dataset
+    
     # Add regularization suffix
     reg_parts = []
     if config.weight_decay > 0:
         reg_parts.append(f"wd{config.weight_decay}")
-    if config.random_crop:
+    if config.data.random_crop:
         reg_parts.append("crop")
-    if config.augment_flip_rotate:
+    if config.data.augment_flip_rotate:
         reg_parts.append("aug")
 
-    reg_suffix = "_" + "_".join(reg_parts) if reg_parts else ""
+    reg_suffix = "_" + "_".join(reg_parts) if reg_parts else "_baseline"
 
-    # Add corruption probability for partial corruption
-    if config.randomization == 'partial_corrupt' and config.corruption_prob > 0:
-        reg_suffix += f"_corrupt{int(config.corruption_prob * 100)}"
-
-    return f"{model_name}_{dataset}_{randomization}{reg_suffix}"
+    return f"{model_name}_{dataset}{reg_suffix}"
 
 
 def print_run_card(config: ExperimentConfig, model, train_loader, test_loader, optimizer, scheduler, device):
@@ -71,7 +66,7 @@ def print_run_card(config: ExperimentConfig, model, train_loader, test_loader, o
     print("\n┌─ MODEL ARCHITECTURE ──────────────────────────────────────────────────────┐")
     print(f"│ Model Name           : {config.model_name:<54} │")
     print(f"│ Input Shape          : {str(config.input_shape):<54} │")
-    print(f"│ Effective Shape      : ({config.input_shape[0]}, {config.center_crop_size}, {config.center_crop_size}){'':<39} │")
+    print(f"│ Effective Shape      : ({config.input_shape[0]}, {config.data.crop_size}, {config.data.crop_size}){'':<39} │")
     print(f"│ Num Classes          : {config.num_classes:<54} │")
     print(f"│ Paper Params (no BN) : {params_info['paper_params']:,}{'':<54}"[:-54] + f"{params_info['paper_params']:>20,} │")
     print(f"│ Total Parameters     : {params_info['total_params']:,}{'':<54}"[:-54] + f"{params_info['total_params']:>20,} │")
@@ -80,21 +75,21 @@ def print_run_card(config: ExperimentConfig, model, train_loader, test_loader, o
     print("└───────────────────────────────────────────────────────────────────────────┘")
 
     print("\n┌─ DATASET & DATA LOADING ──────────────────────────────────────────────────┐")
-    print(f"│ Dataset              : {config.dataset.upper():<54} │")
+    print(f"│ Dataset              : {config.data.dataset.upper():<54} │")
     print(f"│ Train Samples        : {len(train_loader.dataset):,}{'':<54}"[:-54] + f"{len(train_loader.dataset):>20,} │")
     print(f"│ Test Samples         : {len(test_loader.dataset):,}{'':<54}"[:-54] + f"{len(test_loader.dataset):>20,} │")
-    print(f"│ Batch Size           : {config.batch_size:<54} │")
+    print(f"│ Batch Size           : {config.data.batch_size:<54} │")
     print(f"│ Steps per Epoch      : {steps_per_epoch:,}{'':<54}"[:-54] + f"{steps_per_epoch:>20,} │")
     print(f"│ Crop Size (always)   : 28×28 (from 32×32){'':<39} │")
-    crop_type = "Random Crop" if config.random_crop else "Center Crop"
+    crop_type = "Random Crop" if config.data.random_crop else "Center Crop"
     print(f"│ Crop Type            : {crop_type:<54} │")
     print("└───────────────────────────────────────────────────────────────────────────┘")
 
     print("\n┌─ REGULARIZATION TECHNIQUES ───────────────────────────────────────────────┐")
     print(f"│ Explicit Reg OFF     : {str(config.explicit_reg_off):<54} │")
     print(f"│ Weight Decay         : {config.weight_decay:<54} │")
-    print(f"│ Random Crop          : {str(config.random_crop):<54} │")
-    print(f"│ Augment (Flip+Rotate): {str(config.augment_flip_rotate):<54} │")
+    print(f"│ Random Crop          : {str(config.data.random_crop):<54} │")
+    print(f"│ Augment (Flip+Rotate): {str(config.data.augment_flip_rotate):<54} │")
     print("└───────────────────────────────────────────────────────────────────────────┘")
 
     print("\n┌─ OPTIMIZATION & TRAINING ─────────────────────────────────────────────────┐")
