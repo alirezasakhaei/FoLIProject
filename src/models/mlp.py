@@ -42,11 +42,11 @@ class MLP(nn.Module):
         return self.model(x)
 
 
-def mlp_1x512(num_classes=10, input_shape=(3, 32, 32)):
+def mlp_1x512(num_classes=10, input_shape=(3, 28, 28)):
     """MLP with 1 hidden layer of 512 units."""
     return MLP(1, 512, num_classes, input_shape)
 
 
-def mlp_3x512(num_classes=10, input_shape=(3, 32, 32)):
+def mlp_3x512(num_classes=10, input_shape=(3, 28, 28)):
     """MLP with 3 hidden layers of 512 units each."""
     return MLP(3, 512, num_classes, input_shape)

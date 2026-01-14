@@ -168,3 +168,34 @@ class InceptionModule(nn.Module):
 
     def forward(self, x):
         return torch.cat([self.b1(x), self.b2(x), self.b3(x), self.b4(x)], 1)
+
+
+def paper_param_count(model: nn.Module) -> int:
+    """
+    Matches Table 1 convention from Zhang et al. 2017:
+    count Conv/FC params but EXCLUDE BatchNorm params.
+
+    Args:
+        model: PyTorch model
+
+    Returns:
+        int: Number of parameters excluding BatchNorm
+    """
+    total = 0
+    for name, p in model.named_parameters():
+        if ".bn." not in name and "bn." not in name:
+            total += p.numel()
+    return total
+
+
+def total_param_count(model: nn.Module) -> int:
+    """
+    Count total number of parameters in a model.
+
+    Args:
+        model: PyTorch model
+
+    Returns:
+        int: Total number of parameters
+    """
+    return sum(p.numel() for p in model.parameters())

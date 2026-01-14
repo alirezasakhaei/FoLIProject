@@ -1,59 +1,60 @@
 """
 Small AlexNet from Zhang et al. 2017.
-Adapted for CIFAR-10 with smaller spatial dimensions.
+Adapted for CIFAR-10 (28×28 input after cropping).
 """
+import torch
 import torch.nn as nn
-from .utils import get_flattened_size
 
 
 class SmallAlexNet(nn.Module):
     """
-    Small AlexNet adapted for CIFAR-10.
+    Paper description:
+    - Two (Conv 5x5 → MaxPool 3x3 → LocalResponseNorm) modules
+    - FC(384) → FC(192) → Linear(10)
+    - ReLU activations
     
-    Architecture:
-    - Two blocks of: Conv 5x5 -> MaxPool 3x3 -> Local Response Norm
-    - FC(384) -> FC(192) -> Linear(num_classes)
     """
-    def __init__(self, num_classes=10, input_shape=(3, 32, 32)):
-        """
-        Args:
-            num_classes: Number of output classes
-            input_shape: Tuple of (C, H, W) for input dimensions
-        """
-        super(SmallAlexNet, self).__init__()
-        
+    def __init__(self, num_classes: int = 10, input_shape=(3, 28, 28)):
+        super().__init__()
+
+        c, h, w = input_shape
+        if (h, w) != (28, 28):
+            raise ValueError(f"Paper CIFAR setup uses 28x28 inputs; got {h}x{w}.")
+
+        # IMPORTANT: channel sizes chosen to match Table 1: 1,387,786 params. :contentReference[oaicite:3]{index=3}
+        conv1_out = 64
+        conv2_out = 64
+
         self.features = nn.Sequential(
-            # First conv block
-            nn.Conv2d(input_shape[0], 96, kernel_size=5, padding=2),
+            # Block 1
+            nn.Conv2d(c, conv1_out, kernel_size=5, stride=1, padding=2, bias=True),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-            nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2.0),
-            
-            # Second conv block
-            nn.Conv2d(96, 256, kernel_size=5, padding=2),
+            nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2.0),
+
+            # Block 2
+            nn.Conv2d(conv1_out, conv2_out, kernel_size=5, stride=1, padding=2, bias=True),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-            nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2.0),
+            nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2.0),
         )
-        
-        # Compute flattened size dynamically based on input shape
-        flat_size = get_flattened_size(self.features, input_shape)
-        
+
+        # With 28x28 input and the above padding/pooling: 28 -> 14 -> 7, channels=64
+        flat_size = conv2_out * 7 * 7  # 3136
+
         self.classifier = nn.Sequential(
-            nn.Linear(flat_size, 384),
+            nn.Linear(flat_size, 384, bias=True),
             nn.ReLU(inplace=True),
-            nn.Linear(384, 192),
+            nn.Linear(384, 192, bias=True),
             nn.ReLU(inplace=True),
-            nn.Linear(192, num_classes)
+            nn.Linear(192, num_classes, bias=True),
         )
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
+        x = torch.flatten(x, 1)
+        return self.classifier(x)
 
 
-def small_alexnet(num_classes=10, input_shape=(3, 32, 32)):
-    """Small AlexNet for CIFAR-10."""
-    return SmallAlexNet(num_classes, input_shape)
+def small_alexnet(num_classes: int = 10, input_shape=(3, 28, 28)):
+    return SmallAlexNet(num_classes=num_classes, input_shape=input_shape)

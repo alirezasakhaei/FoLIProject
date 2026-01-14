@@ -5,17 +5,18 @@ from dataclasses import dataclass, field
 from typing import Optional, Literal
 import yaml
 from pathlib import Path
+from src.dataset import DataConfig
 
 
 @dataclass
 class ExperimentConfig:
     """
     Configuration for Zhang et al. 2017 experiments.
-    
+
     This config captures all the paper-critical knobs for reproducing
-    their CIFAR10/MNIST experiments.
+    their CIFAR-10 experiments.
     """
-    
+
     # Model configuration
     model_name: Literal[
         'inception',
@@ -25,84 +26,66 @@ class ExperimentConfig:
         'mlp_3x512'
     ] = 'inception'
     num_classes: int = 10
-    input_shape: tuple = (3, 32, 32)  # (C, H, W)
-    
-    # Dataset configuration
-    dataset: Literal['cifar10', 'mnist'] = 'cifar10'
-    data_root: str = './data'
-    
-    # Randomization experiments (Table 1, Appendix E)
-    randomization: Optional[Literal[
-        'random_labels',
-        'partial_corrupt',
-        'shuffled_pixels',
-        'random_pixels',
-        'gaussian_pixels'
-    ]] = None
-    corruption_prob: float = 0.0  # For partial_corrupt
-    randomization_seed: Optional[int] = 42
-    
-    # Regularization toggles (Table 1, Table 4)
+    input_shape: tuple = (3, 28, 28)  # (C, H, W) - CIFAR-10 is always cropped to 28×28
+
+    # Data configuration (composed)
+    data: DataConfig = field(default_factory=DataConfig)
+
+    # Regularization (model training)
     weight_decay: float = 0.0  # L2 regularization coefficient
-    random_crop: bool = False  # Table 1 "random crop" toggle
-    augment_flip_rotate: bool = False  # Appendix E augmentation (flip + rotate 25°)
-    
-    # Preprocessing
-    center_crop_size: int = 28  # CIFAR10 center crop to 28x28
-    
+
     # Training hyperparameters
-    batch_size: int = 128
     num_epochs: int = 100
     learning_rate: float = 0.1
     momentum: float = 0.9
-    lr_schedule: Optional[str] = 'exponential'  # e.g., 'step', 'cosine', 'exponential'
-    
+    lr_schedule: Optional[str] = 'exponential'  # 'step', 'cosine', 'exponential', or None
+
     # Early stopping
-    early_stopping_enabled: bool = True  # Enable early stopping
-    early_stopping_window: int = 6  # Number of consecutive epochs to check
-    early_stopping_min_epochs: int = 25  # Minimum epochs before early stopping can trigger
-    
+    early_stopping_enabled: bool = True
+    early_stopping_window: int = 6
+    early_stopping_min_epochs: int = 25
+
     # Optimizer
     optimizer: Literal['sgd', 'adam'] = 'sgd'
-    
+
     # Logging and checkpointing
     use_wandb: bool = False
     wandb_project: str = 'FOLI-Project'
     wandb_entity: Optional[str] = 'alirezasakhaeirad'
     save_dir: str = './checkpoints'
     log_interval: int = 10  # Log every N batches
-    
+
     # Reproducibility
     seed: int = 42
-    
+
     # Device
-    device: str = 'cuda'  # or 'cpu', 'mps'
-    
+    device: str = 'cuda'  # 'cuda', 'cpu', or 'mps'
+
     @property
     def explicit_reg_off(self) -> bool:
         """
         Check if all explicit regularization is turned off.
-        This is the setting used for random label experiments.
+        This is the setting used for baseline experiments.
         """
         return (
             self.weight_decay == 0.0 and
-            not self.random_crop and
-            not self.augment_flip_rotate
+            not self.data.random_crop and
+            not self.data.augment_flip_rotate
         )
-    
+
     def get_model_weight_decay(self) -> float:
         """
         Get weight decay coefficient for the current model.
-        
+
         The paper mentions "default coefficient for each model" (Table 4)
         but doesn't specify exact values. These are reasonable defaults
         based on common practice for these architectures.
-        
+
         You can override by setting weight_decay directly.
         """
         if self.weight_decay > 0:
             return self.weight_decay
-        
+
         # Default coefficients (can be tuned)
         defaults = {
             'inception': 0.0005,
@@ -112,58 +95,80 @@ class ExperimentConfig:
             'mlp_3x512': 0.0001,
         }
         return defaults.get(self.model_name, 0.0)
-    
-    
+
+
     @classmethod
     def from_yaml(cls, yaml_path: str) -> 'ExperimentConfig':
         """
         Load configuration from YAML file.
-        
+
         Args:
             yaml_path: Path to YAML configuration file
-            
+
         Returns:
             ExperimentConfig instance
         """
         with open(yaml_path, 'r') as f:
             config_dict = yaml.safe_load(f)
         return cls.from_dict(config_dict)
-    
+
     @classmethod
     def from_dict(cls, config_dict: dict) -> 'ExperimentConfig':
         """
         Create configuration from dictionary.
-        
+
+        Supports both flat and nested YAML structures:
+        - Nested: sections like 'model:', 'data:', 'training:', etc.
+        - Flat: all fields at top level (backward compatible)
+
         Args:
             config_dict: Dictionary with configuration parameters
-            
+
         Returns:
             ExperimentConfig instance
         """
+        # Make a copy to avoid modifying original
+        config = config_dict.copy()
+
+        # Flatten nested sections into top-level
+        sections_to_flatten = ['model', 'training', 'regularization', 'early_stopping', 'logging']
+        for section in sections_to_flatten:
+            if section in config and isinstance(config[section], dict):
+                section_dict = config.pop(section)
+                # Merge section contents into top-level (don't overwrite existing keys)
+                for key, value in section_dict.items():
+                    if key not in config:
+                        config[key] = value
+
+        # Handle data config
+        data_dict = config.pop('data', {})
+
+        # For backward compatibility: move data-related fields from top-level into data_dict
+        data_fields = {f.name for f in DataConfig.__dataclass_fields__.values()}
+        for key in list(config.keys()):
+            if key in data_fields and key not in data_dict:
+                data_dict[key] = config.pop(key)
+
+        data_config = DataConfig.from_dict(data_dict)
+
         # Filter to only include valid fields
         valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
-        filtered_dict = {k: v for k, v in config_dict.items() if k in valid_fields}
-        
+        filtered_dict = {k: v for k, v in config.items() if k in valid_fields and k != 'data'}
+
         # Handle tuple conversion for input_shape
         if 'input_shape' in filtered_dict and isinstance(filtered_dict['input_shape'], list):
             filtered_dict['input_shape'] = tuple(filtered_dict['input_shape'])
-        
-        return cls(**filtered_dict)
-    
+
+        return cls(data=data_config, **filtered_dict)
+
     def to_dict(self):
         """Convert config to dictionary for logging."""
         return {
             'model_name': self.model_name,
             'num_classes': self.num_classes,
             'input_shape': self.input_shape,
-            'dataset': self.dataset,
-            'randomization': self.randomization,
-            'corruption_prob': self.corruption_prob,
+            'data': self.data.to_dict(),
             'weight_decay': self.weight_decay,
-            'random_crop': self.random_crop,
-            'augment_flip_rotate': self.augment_flip_rotate,
-            'center_crop_size': self.center_crop_size,
-            'batch_size': self.batch_size,
             'num_epochs': self.num_epochs,
             'learning_rate': self.learning_rate,
             'momentum': self.momentum,
@@ -182,16 +187,16 @@ class ExperimentConfig:
 def get_optimizer(model, config: ExperimentConfig):
     """
     Get optimizer with paper-faithful configuration.
-    
+
     Args:
         model: PyTorch model
         config: ExperimentConfig object
-    
+
     Returns:
         PyTorch optimizer
     """
     import torch.optim as optim
-    
+
     if config.optimizer == 'sgd':
         return optim.SGD(
             model.parameters(),
@@ -212,16 +217,16 @@ def get_optimizer(model, config: ExperimentConfig):
 def get_scheduler(optimizer, config: ExperimentConfig):
     """
     Get learning rate scheduler if specified.
-    
+
     Args:
         optimizer: PyTorch optimizer
         config: ExperimentConfig object
-    
+
     Returns:
         PyTorch scheduler or None
     """
     import torch.optim.lr_scheduler as lr_scheduler
-    
+
     if config.lr_schedule is None:
         return None
     elif config.lr_schedule == 'step':
@@ -250,68 +255,48 @@ def get_scheduler(optimizer, config: ExperimentConfig):
 
 def get_baseline_config(**kwargs) -> ExperimentConfig:
     """
-    Baseline configuration: no randomization, no explicit regularization.
+    Baseline configuration: no explicit regularization.
     This is the "Inception" row in Table 1.
+    - Center crop to 28×28 (no random crop)
+    - No weight decay
+    - No augmentation
     """
-    config = ExperimentConfig(
-        model_name='inception',
-        randomization=None,
-        weight_decay=0.0,
+    data_config = DataConfig(
         random_crop=False,
         augment_flip_rotate=False,
+    )
+    config = ExperimentConfig(
+        model_name='inception',
+        data=data_config,
+        weight_decay=0.0,
     )
     # Override with any user-provided kwargs
     for key, value in kwargs.items():
-        setattr(config, key, value)
-    return config
-
-
-def get_random_labels_config(**kwargs) -> ExperimentConfig:
-    """
-    Random labels experiment (Table 1, Appendix E).
-    All explicit regularization off.
-    """
-    config = ExperimentConfig(
-        model_name='inception',
-        randomization='random_labels',
-        weight_decay=0.0,
-        random_crop=False,
-        augment_flip_rotate=False,
-    )
-    for key, value in kwargs.items():
-        setattr(config, key, value)
+        if key in ['random_crop', 'augment_flip_rotate', 'batch_size', 'num_workers']:
+            setattr(config.data, key, value)
+        else:
+            setattr(config, key, value)
     return config
 
 
 def get_regularized_config(**kwargs) -> ExperimentConfig:
     """
-    Configuration with explicit regularization enabled.
-    This is for testing the effect of regularization (Table 1).
+    Configuration with explicit regularization enabled (Table 1).
+    - Random crop to 28×28 (data augmentation)
+    - Weight decay enabled
     """
+    data_config = DataConfig(
+        random_crop=True,  # Enable random crop (center crop → random crop)
+        augment_flip_rotate=False,
+    )
     config = ExperimentConfig(
         model_name='inception',
-        randomization=None,
+        data=data_config,
         weight_decay=0.0005,  # Enable weight decay
-        random_crop=True,  # Enable random crop
-        augment_flip_rotate=False,  # Typically not used together with random_crop
     )
     for key, value in kwargs.items():
-        setattr(config, key, value)
-    return config
-
-
-def get_augmented_random_labels_config(**kwargs) -> ExperimentConfig:
-    """
-    Random labels with augmentation (Appendix E, Table 4).
-    Tests if augmentation helps when fitting random labels.
-    """
-    config = ExperimentConfig(
-        model_name='inception',
-        randomization='random_labels',
-        weight_decay=0.0,
-        random_crop=False,
-        augment_flip_rotate=True,  # Flip + rotate augmentation
-    )
-    for key, value in kwargs.items():
-        setattr(config, key, value)
+        if key in ['random_crop', 'augment_flip_rotate', 'batch_size', 'num_workers']:
+            setattr(config.data, key, value)
+        else:
+            setattr(config, key, value)
     return config

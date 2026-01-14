@@ -1,18 +1,50 @@
-dataset: cifar10
-num_epochs: 100
-batch_size: 128
-optimizer: sgd
-momentum: 0.9
-augment_flip_rotate: false
-center_crop_size: 28
+# Table 1: Inception baseline (no crop augmentation, no weight decay)
+# This is the baseline configuration with no explicit regularization
+
+# Model configuration
+model:
+  model_name: inception
+  num_classes: 10
+
+# Data configuration
+data:
+  dataset: cifar10
+  data_root: ./data
+  crop_size: 28
+  random_crop: false  # Center crop (baseline)
+  augment_flip_rotate: false
+  batch_size: 128
+  num_workers: 4
+  pin_memory: true
+
+# Training hyperparameters
+training:
+  num_epochs: 100
+  learning_rate: 0.1
+  momentum: 0.9
+  lr_schedule: exponential
+  optimizer: sgd
+
+# Regularization
+regularization:
+  weight_decay: 0.0
+
+# Early stopping
+early_stopping:
+  early_stopping_enabled: true
+  early_stopping_window: 6
+  early_stopping_min_epochs: 25
+
+# Logging and checkpointing
+logging:
+  use_wandb: true
+  wandb_project: FOLI-Project
+  wandb_entity: alirezasakhaeirad
+  save_dir: ./checkpoints/table1
+  log_interval: 10
+
+# Device
 device: cuda
-use_wandb: true
-wandb_project: FOLI-Project
-wandb_entity: alirezasakhaeirad
-save_dir: ./checkpoints/table1
-model_name: inception
-learning_rate: 0.1
-lr_schedule: exponential
-randomization: null
-random_crop: false
-weight_decay: 0.0
+
+# Reproducibility
+seed: 42
