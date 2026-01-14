@@ -62,8 +62,8 @@ class ExperimentConfig:
     
     # Logging and checkpointing
     use_wandb: bool = False
-    wandb_project: str = 'zhang-generalization'
-    wandb_entity: Optional[str] = None
+    wandb_project: str = 'FOLI-Project'
+    wandb_entity: Optional[str] = 'alirezasakhaeirad'
     save_dir: str = './checkpoints'
     log_interval: int = 10  # Log every N batches
     

@@ -548,8 +548,8 @@ if __name__ == '__main__':
     
     # Logging
     parser.add_argument('--use_wandb', action='store_true')
-    parser.add_argument('--wandb_project', type=str, default='zhang-generalization')
-    parser.add_argument('--wandb_entity', type=str, default=None)
+    parser.add_argument('--wandb_project', type=str, default='FOLI-Project')
+    parser.add_argument('--wandb_entity', type=str, default='alirezasakhaeirad')
     parser.add_argument('--save_dir', type=str, default='./checkpoints')
     parser.add_argument('--log_interval', type=int, default=10)
     
