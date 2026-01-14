@@ -2,7 +2,7 @@
 # This is the baseline configuration with no explicit regularization
 
 # Experiment identification
-experiment_id: inception_wo_bn_cifar10_baseline
+experiment_id: inception_wo_bn_cifar10_baseline_lr_0.01
 
 # Model configuration
 model:
@@ -23,7 +23,7 @@ data:
 # Training hyperparameters
 training:
   num_epochs: 100
-  learning_rate: 0.1
+  learning_rate: 0.01
   momentum: 0.9
   lr_schedule: exponential
   optimizer: sgd

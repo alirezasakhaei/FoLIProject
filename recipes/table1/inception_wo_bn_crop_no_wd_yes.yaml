@@ -1,7 +1,7 @@
 # Table 1: Inception without BatchNorm with weight decay, no crop augmentation
 
 # Experiment identification
-experiment_id: inception_wo_bn_cifar10_wd0.0005
+experiment_id: inception_wo_bn_cifar10_wd0.00005_lr_0.01
 
 # Model configuration
 model:
@@ -22,7 +22,7 @@ data:
 # Training hyperparameters
 training:
   num_epochs: 100
-  learning_rate: 0.1
+  learning_rate: 0.01
   momentum: 0.9
   lr_schedule: exponential
   optimizer: sgd
