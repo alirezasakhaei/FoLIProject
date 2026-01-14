@@ -20,6 +20,7 @@ def get_model(config: ExperimentConfig):
         'inception': inception,
         'inception_no_bn': inception_no_bn,
         'small_alexnet': small_alexnet,
+        'alexnet': small_alexnet,
         'mlp_1x512': mlp_1x512,
         'mlp_3x512': mlp_3x512,
     }
