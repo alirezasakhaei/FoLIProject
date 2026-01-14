@@ -147,6 +147,8 @@ def print_run_card(config: ExperimentConfig, model, train_loader, test_loader, o
     print(f"│ Num Epochs           : {config.num_epochs:<54} │")
     print(f"│ Total Training Steps : {total_steps:,}{'':<54}"[:-54] + f"{total_steps:>20,} │")
     print(f"│ Est. Samples Seen    : {total_samples:,}{'':<54}"[:-54] + f"{total_samples:>20,} │")
+    early_stopping_status = f"Enabled (window={config.early_stopping_window})" if config.early_stopping_enabled else "Disabled"
+    print(f"│ Early Stopping       : {early_stopping_status:<54} │")
     print("└───────────────────────────────────────────────────────────────────────────┘")
     
     if config.use_wandb:
@@ -579,6 +581,23 @@ def main(config: ExperimentConfig):
                 'lr': optimizer.param_groups[0]['lr'],
             })
         
+        # Check early stopping condition
+        early_stop = False
+        if config.early_stopping_enabled and len(all_metrics['test_acc']) >= config.early_stopping_window:
+            # Get test accuracies for the last 'window' epochs
+            recent_test_accs = all_metrics['test_acc'][-config.early_stopping_window:]
+            acc_range = max(recent_test_accs) - min(recent_test_accs)
+            
+            if acc_range < 1.0:
+                print(f"\n{'='*60}")
+                print(f"⚠️  EARLY STOPPING TRIGGERED")
+                print(f"{'='*60}")
+                print(f"Test accuracy range over last {config.early_stopping_window} epochs: {acc_range:.4f}% < 1.0%")
+                print(f"Recent test accuracies: {[f'{acc:.2f}' for acc in recent_test_accs]}")
+                print(f"Stopping training and saving model...")
+                print(f"{'='*60}\n")
+                early_stop = True
+        
         # Save checkpoint every epoch (include all metrics for resumption)
         checkpoint = {
             'epoch': epoch,
@@ -603,6 +622,10 @@ def main(config: ExperimentConfig):
             )
             torch.save(checkpoint, best_path)
             print(f"✓ New best model saved: {best_test_acc:.2f}%")
+        
+        # Break if early stopping triggered
+        if early_stop:
+            break
     
     # Save final results
     all_metrics['best_test_acc'] = best_test_acc
@@ -662,6 +685,12 @@ if __name__ == '__main__':
     parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adam'])
     parser.add_argument('--lr_schedule', type=str, default=None, choices=[None, 'step', 'cosine', 'exponential'])
     
+    # Early stopping
+    parser.add_argument('--early_stopping', action='store_true',
+                       help='Enable early stopping when test accuracy plateaus')
+    parser.add_argument('--early_stopping_window', type=int, default=10,
+                       help='Number of consecutive epochs to check for early stopping')
+    
     # Logging
     parser.add_argument('--use_wandb', action='store_true')
     parser.add_argument('--wandb_project', type=str, default='FOLI-Project')
@@ -681,8 +710,6 @@ if __name__ == '__main__':
     if args.config:
         print(f"Loading configuration from {args.config}")
         config = ExperimentConfig.from_yaml(args.config)
-        print(f"DEBUG: Loaded LR from YAML: {config.learning_rate}")
-        print(f"DEBUG: Loaded Schedule from YAML: {config.lr_schedule}")
         # Override settings from CLI if provided
         if args.use_wandb:
             config.use_wandb = True
@@ -706,6 +733,8 @@ if __name__ == '__main__':
             momentum=args.momentum,
             optimizer=args.optimizer,
             lr_schedule=args.lr_schedule,
+            early_stopping_enabled=args.early_stopping,
+            early_stopping_window=args.early_stopping_window,
             use_wandb=args.use_wandb,
             wandb_project=args.wandb_project,
             wandb_entity=args.wandb_entity,

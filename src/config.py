@@ -57,6 +57,10 @@ class ExperimentConfig:
     momentum: float = 0.9
     lr_schedule: Optional[str] = 'exponential'  # e.g., 'step', 'cosine', 'exponential'
     
+    # Early stopping
+    early_stopping_enabled: bool = True  # Enable early stopping
+    early_stopping_window: int = 6  # Number of consecutive epochs to check
+    
     # Optimizer
     optimizer: Literal['sgd', 'adam'] = 'sgd'
     
@@ -166,6 +170,8 @@ class ExperimentConfig:
             'optimizer': self.optimizer,
             'seed': self.seed,
             'explicit_reg_off': self.explicit_reg_off,
+            'early_stopping_enabled': self.early_stopping_enabled,
+            'early_stopping_window': self.early_stopping_window,
         }
 
     def __str__(self):
