@@ -1,11 +1,11 @@
-# Table 1: AlexNet with crop augmentation and weight decay
+# Figure 1a: Inception with shuffled pixels (fixed permutation)
 
 # Experiment identification
-experiment_id: alexnet_cifar10_crop_wd0.00001
+experiment_id: fig1a_inception_shuffled_pixels_v2
 
 # Model configuration
 model:
-  model_name: alexnet
+  model_name: inception
   num_classes: 10
 
 # Data configuration
@@ -13,36 +13,37 @@ data:
   dataset: cifar10
   data_root: ./data
   crop_size: 28
-  random_crop: true  # Random crop augmentation
+  random_crop: false
   augment_flip_rotate: false
   batch_size: 128
   num_workers: 4
   pin_memory: true
+  randomization: shuffled_pixels
 
 # Training hyperparameters
 training:
-  num_epochs: 100
-  learning_rate: 0.005
+  num_epochs: 120
+  learning_rate: 0.1
   momentum: 0.9
   lr_schedule: exponential
   optimizer: sgd
 
 # Regularization
 regularization:
-  weight_decay: 0.00001
+  weight_decay: 0.0
 
 # Early stopping
 early_stopping:
-  early_stopping_enabled: true
+  early_stopping_enabled: false
   early_stopping_window: 6
-  early_stopping_min_epochs: 40
+  early_stopping_min_epochs: 50
 
 # Logging and checkpointing
 logging:
   use_wandb: true
   wandb_project: FOLI-Project
   wandb_entity: alirezasakhaeirad
-  save_dir: ./checkpoints/table1
+  save_dir: ./checkpoints/figure1a
   log_interval: 10
 
 # Device

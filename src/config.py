@@ -64,6 +64,9 @@ class ExperimentConfig:
     # Device
     device: str = 'cuda'  # 'cuda', 'cpu', or 'mps'
 
+    # Stopping criteria
+    stop_after_train_accuracy: float = 100.0
+
     @property
     def explicit_reg_off(self) -> bool:
         """
@@ -152,6 +155,10 @@ class ExperimentConfig:
             if key in data_fields and key not in data_dict:
                 data_dict[key] = config.pop(key)
 
+        # Ensure seed is passed to data config if not already specified
+        if 'seed' not in data_dict and 'seed' in config:
+            data_dict['seed'] = config['seed']
+
         data_config = DataConfig.from_dict(data_dict)
 
         # Filter to only include valid fields
@@ -183,6 +190,7 @@ class ExperimentConfig:
             'early_stopping_enabled': self.early_stopping_enabled,
             'early_stopping_window': self.early_stopping_window,
             'early_stopping_min_epochs': self.early_stopping_min_epochs,
+            'stop_after_train_accuracy': self.stop_after_train_accuracy,
         }
 
     def __str__(self):

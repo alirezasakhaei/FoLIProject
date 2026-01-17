@@ -1,0 +1,53 @@
+# IMDb: DistilBERT with random labels
+# This configuration uses the IMDb dataset for sentiment analysis with randomized labels
+# Following Zhang et al. 2017 - testing model's ability to fit random labels
+
+# Experiment identification
+experiment_id: distilbert_imdb_random_labels
+
+# Model configuration
+model:
+  model_name: distilbert-base-uncased
+  num_classes: 2  # Binary classification: positive/negative
+  task_type: text_classification
+
+# Data configuration
+data:
+  dataset: imdb
+  data_root: ./data
+  batch_size: 16
+  num_workers: 4
+  pin_memory: true
+  randomization: random_labels  # Randomize labels
+  max_length: 512  # Maximum sequence length for tokenization
+  data_fraction: 1.0  # Use 100% of the data
+
+# Training hyperparameters
+training:
+  num_epochs: 10  # More epochs to see if model can fit random labels
+  learning_rate: 2e-5  # Following HuggingFace tutorial
+  warmup_steps: 500
+  optimizer: adamw
+  weight_decay: 0.0  # No weight decay for random labels experiment
+
+# Early stopping
+early_stopping:
+  early_stopping_enabled: false  # Disabled to observe full training on random labels
+  early_stopping_min_epochs: 1
+  early_stopping_window: 3
+
+# Logging and checkpointing
+logging:
+  use_wandb: true
+  wandb_project: FOLI-Project
+  wandb_entity: alirezasakhaeirad
+  save_dir: ./checkpoints/imdb
+  log_interval: 100
+  eval_strategy: epoch  # Evaluate every epoch
+  save_strategy: epoch
+
+# Device
+device: cuda
+
+# Reproducibility
+seed: 42

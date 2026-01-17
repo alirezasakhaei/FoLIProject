@@ -193,6 +193,17 @@ def main(config: ExperimentConfig):
             'lr': optimizer.param_groups[0]['lr'],
         })
 
+        # Check if stop after train accuracy is reached
+        if config.stop_after_train_accuracy is not None and train_acc >= config.stop_after_train_accuracy:
+            print(f"\n{'='*60}")
+            print(f"⚠️  STOP AFTER TRAIN ACCURACY REACHED")
+            print(f"{'='*60}")
+            print(f"Train accuracy: {train_acc:.2f}%")
+            print(f"It took {epoch} epochs to reach {train_acc:.2f}%")
+            print(f"Stopping training and saving model...")
+            print(f"{'='*60}\n")
+            break
+
         # Check early stopping condition
         early_stop = False
         if config.early_stopping_enabled and epoch >= config.early_stopping_min_epochs and len(all_metrics['test_acc']) >= config.early_stopping_window:

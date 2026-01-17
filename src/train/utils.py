@@ -22,7 +22,9 @@ def get_model(config: ExperimentConfig):
         'small_alexnet': small_alexnet,
         'alexnet': small_alexnet,
         'mlp_1x512': mlp_1x512,
+        'mlp1': mlp_1x512,
         'mlp_3x512': mlp_3x512,
+        'mlp3': mlp_3x512,
     }
 
     model_fn = model_map[config.model_name]
